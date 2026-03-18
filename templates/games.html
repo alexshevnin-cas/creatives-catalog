@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Справочник игр — Creatives Catalog{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Справочник игр</h1>
+</div>
+
+<form class="game-add-form" method="post" action="{{ url_for('games_add') }}">
+    <h3>Добавить игру</h3>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Код 1С</label>
+            <input type="text" name="code_1c" required placeholder="7448" />
+        </div>
+        <div class="form-group">
+            <label>Название</label>
+            <input type="text" name="name" required placeholder="Car Crash Simulator" />
+        </div>
+        <div class="form-group">
+            <label>Short name</label>
+            <input type="text" name="short_name" required placeholder="CarCrash" />
+        </div>
+        <div class="form-group">
+            <label>Платформа</label>
+            <select name="platform">
+                {% for p in platforms %}
+                <option value="{{ p }}">{{ p }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group form-group-btn">
+            <button type="submit" class="btn btn-primary">Добавить</button>
+        </div>
+    </div>
+</form>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Код 1С</th>
+            <th>Название</th>
+            <th>Short name</th>
+            <th>Платформа</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for g in games %}
+        <tr>
+            <form method="post" action="{{ url_for('games_edit', gid=g.id) }}">
+                <td><input type="text" name="code_1c" value="{{ g.code_1c }}" required class="inline-input" /></td>
+                <td><input type="text" name="name" value="{{ g.name }}" required class="inline-input" /></td>
+                <td><input type="text" name="short_name" value="{{ g.short_name }}" required class="inline-input" /></td>
+                <td>
+                    <select name="platform" class="inline-input">
+                        {% for p in platforms %}
+                        <option value="{{ p }}" {% if g.platform == p %}selected{% endif %}>{{ p }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td class="actions-cell">
+                    <button type="submit" class="btn btn-sm">Сохранить</button>
+            </form>
+            <form method="post" action="{{ url_for('games_delete', gid=g.id) }}" style="display:inline;"
+                  onsubmit="return confirm('Удалить игру «{{ g.name }}»?')">
+                    <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
+            </form>
+                </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if not games %}
+<div class="empty-state">
+    <p>Игр пока нет. Добавьте первую выше.</p>
+</div>
+{% endif %}
+{% endblock %}

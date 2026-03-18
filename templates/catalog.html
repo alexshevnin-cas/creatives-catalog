@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block title %}Каталог — Creatives Catalog{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Каталог креативов</h1>
+    <a href="{{ url_for('create') }}" class="btn btn-primary">+ Добавить</a>
+</div>
+
+<form class="filters" method="get" action="{{ url_for('catalog') }}">
+    <div class="filter-row">
+        <select name="game" onchange="this.form.submit()">
+            <option value="">Все игры</option>
+            {% for g in games %}
+            <option value="{{ g.id }}" {% if filters.game == g.id|string %}selected{% endif %}>
+                {{ g.short_name }} ({{ g.code_1c }})
+            </option>
+            {% endfor %}
+        </select>
+
+        <select name="type" onchange="this.form.submit()">
+            <option value="">Все типы</option>
+            {% for t in types %}
+            <option value="{{ t }}" {% if filters.type == t %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="seasonal" onchange="this.form.submit()">
+            <option value="">Все сезоны</option>
+            {% for s in seasonal_tags %}
+            <option value="{{ s }}" {% if filters.seasonal == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="status" onchange="this.form.submit()">
+            <option value="">Все статусы</option>
+            {% for s in statuses %}
+            <option value="{{ s }}" {% if filters.status == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+        </select>
+
+        <div class="search-box">
+            <input type="text" name="search" placeholder="Поиск по имени..."
+                   value="{{ filters.search }}" />
+            <button type="submit" class="btn btn-sm">Найти</button>
+        </div>
+    </div>
+</form>
+
+{% if tree %}
+<div class="tree">
+    {% for game_name, game_data in tree.items() %}
+    <div class="tree-node">
+        <div class="tree-header tree-level-0" onclick="toggleTree(this)">
+            <span class="tree-arrow">&#9654;</span>
+            <strong>{{ game_data.short_name }}</strong>
+            <span class="text-muted">({{ game_data.code_1c }})</span>
+        </div>
+        <div class="tree-children" style="display:none;">
+            {% for type_name, concepts in game_data.types.items() %}
+            <div class="tree-node">
+                <div class="tree-header tree-level-1" onclick="toggleTree(this)">
+                    <span class="tree-arrow">&#9654;</span>
+                    <span class="badge badge-type-{{ type_name|lower }}">{{ type_name }}</span>
+                    <span class="tree-count">{{ concepts|length }}</span>
+                    <button class="btn btn-primary btn-sm btn-add"
+                            onclick="event.stopPropagation(); quickAdd({{ game_data.game_id }}, '{{ type_name }}')">+ Добавить</button>
+                </div>
+                <div class="tree-children" style="display:none;">
+                    <table class="data-table catalog-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Сезон</th>
+                                <th style="width:64px;">Превью</th>
+                                <th>Концепт</th>
+                                <th>Файлы</th>
+                                <th>Сети</th>
+                                <th>Статус</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for concept in concepts %}
+                            {% set first_r = concept.renditions[0] if concept.renditions else None %}
+                            <tr data-id="{{ concept.id }}">
+                                <td class="text-muted"><strong>{{ '%03d'|format(concept.seq_number) }}</strong></td>
+                                <td>{% if concept.seasonal_tag != 'STD' %}<span class="badge badge-seasonal">{{ concept.seasonal_tag }}</span>{% else %}<span class="text-dim">STD</span>{% endif %}</td>
+                                <td class="list-preview">
+                                    {% if first_r %}
+                                        {% if first_r.thumbnail_path %}
+                                            <img src="{{ url_for('thumbnail_file', filename=first_r.thumbnail_path) }}" alt="" loading="lazy">
+                                        {% elif first_r.file_path | file_kind == 'image' %}
+                                            <img src="{{ url_for('uploaded_file', filename=first_r.file_path) }}" alt="" loading="lazy">
+                                        {% elif first_r.file_path | file_kind == 'video' %}
+                                            <video preload="metadata" muted><source src="{{ url_for('uploaded_file', filename=first_r.file_path) }}"></video>
+                                        {% else %}
+                                            <div class="file-icon-sm">{{ type_name[:1] }}</div>
+                                        {% endif %}
+                                    {% else %}
+                                        <div class="file-icon-sm">—</div>
+                                    {% endif %}
+                                </td>
+                                <td><code class="creative-name">{{ concept.concept_name }}</code></td>
+                                <td>
+                                    {% if concept.renditions %}
+                                    <span class="files-toggle" onclick="toggleFiles(this)">
+                                        {{ concept.renditions|length }} файл{{ 'ов' if concept.renditions|length > 4 else ('а' if concept.renditions|length > 1 else '') }}
+                                        <span class="files-arrow">&#9654;</span>
+                                    </span>
+                                    {% else %}
+                                    <span class="text-dim">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="networks-cell">
+                                    {% for net in networks %}
+                                    <span class="badge badge-net{% if net in concept.networks %} badge-net-on{% endif %}"
+                                          data-id="{{ concept.id }}" data-net="{{ net }}"
+                                          onclick="toggleNetwork(this)">{{ net }}</span>
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    <select class="status-select status-{{ concept.status|lower }}"
+                                            data-id="{{ concept.id }}" onchange="changeStatus(this)">
+                                        {% for s in statuses %}
+                                        <option value="{{ s }}" {% if concept.status == s %}selected{% endif %}>{{ s }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td><button class="btn btn-danger btn-sm" onclick="deleteCreative({{ concept.id }}, this)" title="Удалить">&times;</button></td>
+                            </tr>
+                            {% if concept.renditions %}
+                            <tr class="renditions-row" style="display:none;">
+                                <td colspan="9" class="renditions-cell">
+                                    <div class="renditions-list">
+                                        {% for r in concept.renditions %}
+                                        <div class="rendition-item">
+                                            <code>{{ r.generated_name }}</code>
+                                            <span class="text-muted">
+                                                {% if r.width and r.height %}{{ r.width }}&times;{{ r.height }}{% endif %}
+                                                {% if r.duration_sec %} &middot; {{ r.duration_sec }}s{% endif %}
+                                                {% if r.file_size_mb %} &middot; {{ r.file_size_mb }} MB{% endif %}
+                                            </span>
+                                            <a href="{{ url_for('uploaded_file', filename=r.file_path) }}" download class="btn btn-sm">Скачать</a>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <p>Креативов пока нет</p>
+    <a href="{{ url_for('create') }}" class="btn btn-primary">Создать первый</a>
+</div>
+{% endif %}
+
+<!-- Modal -->
+<div class="modal-overlay" id="addModal" style="display:none;" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Добавить креатив</h3>
+            <button class="btn btn-sm" onclick="closeModal()">&times;</button>
+        </div>
+        <form method="post" action="{{ url_for('create') }}" enctype="multipart/form-data" id="modalForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Игра</label>
+                    <select name="game_id" id="m_game_id" required onchange="modalFetchSeq()">
+                        {% for g in games %}
+                        <option value="{{ g.id }}" data-code="{{ g.code_1c }}" data-short="{{ g.short_name }}">
+                            {{ g.short_name }} ({{ g.code_1c }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Тип</label>
+                    <select name="type" id="m_type" required onchange="modalFetchSeq()">
+                        {% for t in types %}
+                        <option value="{{ t }}">{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Сезонность</label>
+                    <select name="seasonal_tag" id="m_seasonal" onchange="modalUpdateName()">
+                        {% for s in seasonal_tags %}
+                        <option value="{{ s }}">{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="file-drop" id="modalFileDrop">
+                    <input type="file" name="file" id="m_file" required
+                           accept="image/*,video/*,.html,.zip" onchange="modalFileSelected(this)" />
+                    <p>Перетащите файл или нажмите для выбора</p>
+                </div>
+            </div>
+            <input type="hidden" name="width" id="m_width" />
+            <input type="hidden" name="height" id="m_height" />
+            <input type="hidden" name="duration_sec" id="m_duration" />
+            <div class="name-preview">
+                <code id="m_name">—</code>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg" id="m_submit" disabled>Добавить</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

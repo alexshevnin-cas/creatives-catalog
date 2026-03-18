@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Создать креатив — Creatives Catalog{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Создать креатив</h1>
+</div>
+
+<div class="create-simple">
+    <form method="post" action="{{ url_for('create') }}" enctype="multipart/form-data" id="createForm">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="game_id">Игра</label>
+                <select name="game_id" id="game_id" required onchange="fetchSeq()">
+                    <option value="">— Игра —</option>
+                    {% for g in games %}
+                    <option value="{{ g.id }}" data-code="{{ g.code_1c }}" data-short="{{ g.short_name }}">
+                        {{ g.short_name }} ({{ g.code_1c }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="type">Тип</label>
+                <select name="type" id="type" required onchange="onTypeChange()">
+                    <option value="">— Тип —</option>
+                    {% for t in types %}
+                    <option value="{{ t }}">{{ t }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="seasonal_tag">Сезонность</label>
+                <select name="seasonal_tag" id="seasonal_tag" onchange="updatePreview()">
+                    {% for s in seasonal_tags %}
+                    <option value="{{ s }}">{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="file-drop" id="fileDrop">
+                <input type="file" name="file" id="fileInput" required
+                       accept="image/*,video/*,.html,.zip" onchange="onFileSelected(this)" />
+                <p>Перетащите файл или нажмите для выбора</p>
+            </div>
+        </div>
+
+        <input type="hidden" name="width" id="width" />
+        <input type="hidden" name="height" id="height" />
+        <input type="hidden" name="duration_sec" id="duration_sec" />
+
+        <div class="name-preview" id="namePreview">
+            <code id="generatedName">—</code>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" disabled>Добавить</button>
+    </form>
+</div>
+{% endblock %}
