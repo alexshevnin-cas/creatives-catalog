@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creatives Catalog — CAS.AI</title>
+<style>
+:root {
+    --bg-body: #f6f8fa; --bg-surface: #ffffff; --bg-elevated: #f0f2f5;
+    --bg-input: #ffffff; --border: #d0d7de; --border-focus: #0969da;
+    --text: #1f2328; --text-muted: #656d76; --text-dim: #8c959f;
+    --accent: #0969da; --accent-hover: #0550ae;
+    --green: #1a7f37; --yellow: #9a6700; --red: #cf222e;
+    --purple: #8250df; --cyan: #1b7c83; --orange: #bc4c00;
+    --radius: 8px; --radius-sm: 4px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: var(--bg-body); color: var(--text); line-height: 1.5; }
+a { color: var(--accent); text-decoration: none; }
+
+/* Navbar */
+.navbar { display: flex; align-items: center; gap: 2rem; padding: 0 2rem; height: 56px; background: var(--bg-surface); border-bottom: 1px solid var(--border); box-shadow: 0 1px 3px rgba(27,31,36,0.04); position: sticky; top: 0; z-index: 100; }
+.nav-brand { font-weight: 700; font-size: 1.1rem; }
+
+.container { max-width: 1280px; margin: 0 auto; padding: 1.5rem 2rem 3rem; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+.page-header h1 { font-size: 1.5rem; font-weight: 600; }
+
+/* Filters */
+.filters { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; margin-bottom: 1.5rem; }
+.filter-row { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+.filter-row select { width: auto; min-width: 140px; }
+.search-box { display: flex; gap: 0.5rem; flex: 1; min-width: 200px; }
+.search-box input { flex: 1; }
+
+input, select { padding: 0.5rem 0.75rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 0.9rem; }
+input:focus, select:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(9,105,218,0.15); }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-elevated); color: var(--text); font-size: 0.875rem; cursor: pointer; white-space: nowrap; }
+.btn:hover { background: var(--bg-surface); border-color: var(--text-muted); }
+.btn-primary { background: #2da44e; border-color: rgba(27,31,36,0.15); color: #fff; }
+.btn-primary:hover { background: #2c974b; }
+.btn-sm { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+.btn-danger { border-color: rgba(207,34,46,0.3); color: var(--red); }
+.btn-danger:hover { background: #ffebe9; }
+
+/* Tree */
+.tree-node { margin-bottom: 2px; }
+.tree-header { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 0.75rem; border-radius: var(--radius-sm); cursor: pointer; user-select: none; }
+.tree-header:hover { background: var(--bg-elevated); }
+.tree-level-0 { font-size: 1rem; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem 1rem; margin-bottom: 4px; }
+.tree-level-1 { font-size: 0.9rem; padding-left: 1.5rem; }
+.tree-arrow { display: inline-block; font-size: 0.7rem; color: var(--text-muted); transition: transform 0.15s; width: 12px; text-align: center; }
+.tree-header.open > .tree-arrow { transform: rotate(90deg); }
+.tree-count { margin-left: auto; font-size: 0.75rem; color: var(--text-dim); background: var(--bg-elevated); padding: 0.1rem 0.5rem; border-radius: 10px; }
+.tree-children { padding-left: 1rem; display: none; }
+
+/* Table */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { text-align: left; padding: 0.6rem 0.75rem; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.05em; }
+.data-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: 0.9rem; }
+.data-table tr:hover td { background: var(--bg-elevated); }
+
+/* Preview */
+.list-preview { width: 64px; height: 44px; overflow: hidden; border-radius: var(--radius-sm); background: var(--bg-elevated); }
+.list-preview img { width: 64px; height: 44px; object-fit: cover; display: block; border-radius: var(--radius-sm); }
+.file-icon-sm { width: 64px; height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; color: var(--text-dim); }
+
+/* Badges */
+.badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500; }
+.badge-type-video { background: #ddf4ff; color: var(--accent); }
+.badge-type-banner { background: #fff1e5; color: var(--orange); }
+.badge-type-playable { background: #fbefff; color: var(--purple); }
+.badge-seasonal { background: #fff8c5; color: var(--yellow); }
+
+.badge-net { display: inline-block; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.7rem; font-weight: 500; margin: 1px; background: var(--bg-elevated); color: var(--text-dim); border: 1px solid var(--border); }
+.badge-net-on { background: #ddf4ff; color: var(--accent); border-color: #b6e3ff; }
+
+/* Status */
+.status-select { width: auto; padding: 0.2rem 0.5rem; font-size: 0.8rem; border-radius: 12px; cursor: pointer; }
+.status-draft { background: #f6f8fa; border-color: #d0d7de; color: var(--text-muted); }
+.status-ready { background: #ddf4ff; border-color: #b6e3ff; color: var(--accent); }
+.status-active { background: #dafbe1; border-color: #aceebb; color: var(--green); }
+.status-archived { background: #f6f8fa; border-color: #d0d7de; color: var(--text-dim); }
+
+.creative-name { font-family: 'SF Mono','Fira Code',monospace; font-size: 0.85rem; color: var(--accent); }
+.text-muted { color: var(--text-muted); font-size: 0.85rem; }
+.text-dim { color: var(--text-dim); }
+
+/* Renditions */
+.files-toggle { cursor: pointer; color: var(--accent); font-size: 0.85rem; user-select: none; }
+.files-toggle:hover { text-decoration: underline; }
+.files-arrow { display: inline-block; font-size: 0.65rem; transition: transform 0.15s; margin-left: 0.25rem; }
+.files-toggle.open .files-arrow { transform: rotate(90deg); }
+.renditions-row td { padding: 0 !important; border-bottom: 1px solid var(--border); }
+.renditions-cell { padding: 0 0 0 2rem !important; }
+.renditions-list { padding: 0.5rem 0.75rem; background: var(--bg-elevated); }
+.rendition-item { display: flex; align-items: center; gap: 1rem; padding: 0.4rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.85rem; }
+.rendition-item:hover { background: var(--bg-surface); }
+.rendition-item code { font-family: 'SF Mono','Fira Code',monospace; color: var(--text); font-size: 0.8rem; }
+
+.networks-cell { white-space: nowrap; }
+.empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
+
+@media (max-width: 768px) { .filter-row { flex-direction: column; } .filter-row select { width: 100%; } .container { padding: 1rem; } }
+</style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="nav-brand">Creatives Catalog</div>
+</nav>
+
+<main class="container">
+    <div class="page-header">
+        <h1>Каталог креативов</h1>
+    </div>
+
+    <div class="filters">
+        <div class="filter-row">
+            <select id="fGame" onchange="render()"><option value="">Все игры</option></select>
+            <select id="fType" onchange="render()">
+                <option value="">Все типы</option>
+                <option value="Video">Video</option>
+                <option value="Banner">Banner</option>
+                <option value="Playable">Playable</option>
+            </select>
+            <select id="fSeasonal" onchange="render()">
+                <option value="">Все сезоны</option>
+                <option value="STD">STD</option>
+                <option value="UE">UE</option>
+                <option value="NY">NY</option>
+                <option value="EA">EA</option>
+            </select>
+            <select id="fStatus" onchange="render()">
+                <option value="">Все статусы</option>
+                <option value="Draft">Draft</option>
+                <option value="Ready">Ready</option>
+                <option value="Active">Active</option>
+                <option value="Archived">Archived</option>
+            </select>
+            <div class="search-box">
+                <input type="text" id="fSearch" placeholder="Поиск по имени..." oninput="render()" />
+            </div>
+        </div>
+    </div>
+
+    <div id="catalog"></div>
+</main>
+
+<script>
+let DATA = null;
+const NETS = ['Mintegral','FB','TikTok','Google Ads'];
+
+fetch('data.json').then(r=>r.json()).then(d=>{
+    DATA = d;
+    const sel = document.getElementById('fGame');
+    d.games.forEach(g => {
+        const o = document.createElement('option');
+        o.value = g.id; o.textContent = `${g.short_name} (${g.code_1c})`;
+        sel.appendChild(o);
+    });
+    render();
+});
+
+function render() {
+    if (!DATA) return;
+    const fGame = document.getElementById('fGame').value;
+    const fType = document.getElementById('fType').value;
+    const fSeasonal = document.getElementById('fSeasonal').value;
+    const fStatus = document.getElementById('fStatus').value;
+    const fSearch = document.getElementById('fSearch').value.toLowerCase();
+    const el = document.getElementById('catalog');
+
+    let html = '<div class="tree">';
+    let anyGame = false;
+
+    DATA.tree.forEach(game => {
+        if (fGame && String(game.game_id) !== fGame) return;
+
+        let gameHtml = '';
+        let anyType = false;
+
+        game.types.forEach(typeObj => {
+            if (fType && typeObj.type !== fType) return;
+
+            let concepts = typeObj.concepts.filter(c => {
+                if (fSeasonal && c.seasonal_tag !== fSeasonal) return false;
+                if (fStatus && c.status !== fStatus) return false;
+                if (fSearch && !c.concept_name.toLowerCase().includes(fSearch)) return false;
+                return true;
+            });
+            if (!concepts.length) return;
+            anyType = true;
+
+            gameHtml += `<div class="tree-node">
+                <div class="tree-header tree-level-1" onclick="toggle(this)">
+                    <span class="tree-arrow">&#9654;</span>
+                    <span class="badge badge-type-${typeObj.type.toLowerCase()}">${typeObj.type}</span>
+                    <span class="tree-count">${concepts.length}</span>
+                </div>
+                <div class="tree-children">
+                    <table class="data-table"><thead><tr>
+                        <th>#</th><th>Сезон</th><th style="width:64px">Превью</th>
+                        <th>Концепт</th><th>Файлы</th><th>Сети</th><th>Статус</th>
+                    </tr></thead><tbody>`;
+
+            concepts.forEach(c => {
+                const fr = c.renditions[0];
+                const thumb = fr && fr.thumbnail_path
+                    ? `<img src="thumbnails/${fr.thumbnail_path}" loading="lazy">`
+                    : `<div class="file-icon-sm">${typeObj.type[0]}</div>`;
+                const season = c.seasonal_tag !== 'STD'
+                    ? `<span class="badge badge-seasonal">${c.seasonal_tag}</span>`
+                    : '<span class="text-dim">STD</span>';
+                const nets = NETS.map(n =>
+                    `<span class="badge badge-net${c.networks.includes(n)?' badge-net-on':''}">${n}</span>`
+                ).join('');
+                const statusCls = 'status-' + c.status.toLowerCase();
+
+                const fileCount = c.renditions.length;
+                const fileLabel = fileCount + ' файл' + (fileCount > 4 ? 'ов' : fileCount > 1 ? 'а' : '');
+
+                gameHtml += `<tr>
+                    <td class="text-muted"><strong>${String(c.seq_number).padStart(3,'0')}</strong></td>
+                    <td>${season}</td>
+                    <td class="list-preview">${thumb}</td>
+                    <td><code class="creative-name">${c.concept_name}</code></td>
+                    <td>${fileCount ? `<span class="files-toggle" onclick="toggleFiles(this)">${fileLabel} <span class="files-arrow">&#9654;</span></span>` : '<span class="text-dim">—</span>'}</td>
+                    <td class="networks-cell">${nets}</td>
+                    <td><select class="status-select ${statusCls}" disabled>
+                        <option>${c.status}</option></select></td>
+                </tr>`;
+
+                if (c.renditions.length) {
+                    gameHtml += `<tr class="renditions-row" style="display:none"><td colspan="7" class="renditions-cell"><div class="renditions-list">`;
+                    c.renditions.forEach(r => {
+                        const info = [];
+                        if (r.width && r.height) info.push(`${r.width}&times;${r.height}`);
+                        if (r.duration_sec) info.push(`${r.duration_sec}s`);
+                        if (r.file_size_mb) info.push(`${r.file_size_mb} MB`);
+                        gameHtml += `<div class="rendition-item"><code>${r.generated_name}</code><span class="text-muted">${info.join(' &middot; ')}</span></div>`;
+                    });
+                    gameHtml += `</div></td></tr>`;
+                }
+            });
+
+            gameHtml += '</tbody></table></div></div>';
+        });
+
+        if (!anyType) return;
+        anyGame = true;
+        html += `<div class="tree-node">
+            <div class="tree-header tree-level-0" onclick="toggle(this)">
+                <span class="tree-arrow">&#9654;</span>
+                <strong>${game.short_name}</strong>
+                <span class="text-muted">(${game.code_1c})</span>
+            </div>
+            <div class="tree-children">${gameHtml}</div>
+        </div>`;
+    });
+
+    html += '</div>';
+    if (!anyGame) html = '<div class="empty-state"><p>Ничего не найдено</p></div>';
+    el.innerHTML = html;
+}
+
+function toggle(header) {
+    header.classList.toggle('open');
+    const ch = header.nextElementSibling;
+    if (ch) ch.style.display = ch.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleFiles(span) {
+    span.classList.toggle('open');
+    const tr = span.closest('tr').nextElementSibling;
+    if (tr && tr.classList.contains('renditions-row'))
+        tr.style.display = tr.style.display === 'none' ? 'table-row' : 'none';
+}
+</script>
+</body>
+</html>

@@ -111,6 +111,7 @@ def main():
             concept_name TEXT NOT NULL,
             description TEXT,
             status TEXT DEFAULT 'Draft',
+            networks TEXT DEFAULT '',
             created_at TEXT DEFAULT (datetime('now')),
             UNIQUE(game_id, type, seq_number)
         );
