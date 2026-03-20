@@ -25,10 +25,10 @@
             {% endfor %}
         </select>
 
-        <select name="seasonal" onchange="this.form.submit()">
-            <option value="">Все сезоны</option>
-            {% for s in seasonal_tags %}
-            <option value="{{ s }}" {% if filters.seasonal == s %}selected{% endif %}>{{ s }}</option>
+        <select name="tag" onchange="this.form.submit()">
+            <option value="">Все теги</option>
+            {% for t in tags %}
+            <option value="{{ t }}" {% if filters.tag == t %}selected{% endif %}>{{ t }}</option>
             {% endfor %}
         </select>
 
@@ -71,7 +71,7 @@
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Сезон</th>
+                                <th>Теги</th>
                                 <th style="width:64px;">Превью</th>
                                 <th>Концепт</th>
                                 <th>Файлы</th>
@@ -85,7 +85,13 @@
                             {% set first_r = concept.renditions[0] if concept.renditions else None %}
                             <tr data-id="{{ concept.id }}">
                                 <td class="text-muted"><strong>{{ '%03d'|format(concept.seq_number) }}</strong></td>
-                                <td>{% if concept.seasonal_tag != 'STD' %}<span class="badge badge-seasonal">{{ concept.seasonal_tag }}</span>{% else %}<span class="text-dim">STD</span>{% endif %}</td>
+                                <td class="tags-cell">
+                                    {% for t in tags %}
+                                    <span class="badge badge-tag{% if t in concept.tags %} badge-tag-on{% endif %}"
+                                          data-id="{{ concept.id }}" data-tag="{{ t }}"
+                                          onclick="toggleTag(this)">{{ t }}</span>
+                                    {% endfor %}
+                                </td>
                                 <td class="list-preview">
                                     {% if first_r %}
                                         {% if first_r.thumbnail_path %}
@@ -193,10 +199,10 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Сезонность</label>
-                    <select name="seasonal_tag" id="m_seasonal" onchange="modalUpdateName()">
-                        {% for s in seasonal_tags %}
-                        <option value="{{ s }}">{{ s }}</option>
+                    <label>Теги</label>
+                    <select name="tags" id="m_tags" multiple>
+                        {% for t in tags %}
+                        <option value="{{ t }}">{{ t }}</option>
                         {% endfor %}
                     </select>
                 </div>

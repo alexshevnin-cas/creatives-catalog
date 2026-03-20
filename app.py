@@ -24,10 +24,10 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['THUMBNAIL_FOLDER'], exist_ok=True)
 
 CREATIVE_TYPES = ('Video', 'Banner', 'Playable')
-SEASONAL_TAGS = ('STD', 'UE', 'NY', 'EA')
 STATUSES = ('Draft', 'Ready', 'Active', 'Archived')
 PLATFORMS = ('Android', 'iOS', 'Both')
 NETWORKS = ('Mintegral', 'FB', 'TikTok', 'Google Ads')
+TAGS = ('gameplay', 'mislead', 'UGC', 'seasonal')
 
 IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
 VIDEO_EXTENSIONS = {'.mp4', '.mov', '.avi', '.webm', '.mkv'}
@@ -65,6 +65,8 @@ def init_db():
             cols = [r[1] for r in db.execute('PRAGMA table_info(creatives)').fetchall()]
             if 'networks' not in cols:
                 db.execute("ALTER TABLE creatives ADD COLUMN networks TEXT DEFAULT ''")
+            if 'tags' not in cols:
+                db.execute("ALTER TABLE creatives ADD COLUMN tags TEXT DEFAULT ''")
 
         db.executescript('''
             CREATE TABLE IF NOT EXISTS games (
@@ -80,11 +82,11 @@ def init_db():
                 game_id INTEGER NOT NULL REFERENCES games(id),
                 type TEXT NOT NULL,
                 seq_number INTEGER NOT NULL,
-                seasonal_tag TEXT DEFAULT 'STD',
                 concept_name TEXT NOT NULL,
                 description TEXT,
                 status TEXT DEFAULT 'Draft',
                 networks TEXT DEFAULT '',
+                tags TEXT DEFAULT '',
                 created_at TEXT DEFAULT (datetime('now')),
                 UNIQUE(game_id, type, seq_number)
             );
@@ -126,16 +128,15 @@ def get_next_seq(db, game_id, creative_type):
     return row[0]
 
 
-def make_concept_name(creative_type, seq, seasonal, code_1c, short_name):
-    tag = '' if seasonal == 'STD' else seasonal
+def make_concept_name(creative_type, seq, code_1c, short_name):
     n = str(seq).zfill(3)
     if creative_type == 'Video':
-        return f'V{n}{tag}_{code_1c}_{short_name}'
+        return f'V{n}_{code_1c}_{short_name}'
     if creative_type == 'Banner':
-        return f'B{n}{tag}_{code_1c}_{short_name}'
+        return f'B{n}_{code_1c}_{short_name}'
     if creative_type == 'Playable':
-        return f'PLAY_{n}{tag}_{code_1c}_{short_name}'
-    return f'X{n}{tag}_{code_1c}_{short_name}'
+        return f'PLAY_{n}_{code_1c}_{short_name}'
+    return f'X{n}_{code_1c}_{short_name}'
 
 
 def make_rendition_name(concept_name, creative_type, width=None, height=None, duration_sec=None):
@@ -181,8 +182,8 @@ def catalog():
         games_list = db.execute('SELECT * FROM games ORDER BY short_name').fetchall()
 
         q = (
-            'SELECT c.id AS c_id, c.game_id, c.type, c.seq_number, c.seasonal_tag, '
-            'c.concept_name, c.description, c.status, c.networks, '
+            'SELECT c.id AS c_id, c.game_id, c.type, c.seq_number, '
+            'c.concept_name, c.description, c.status, c.networks, c.tags, '
             'g.code_1c, g.name AS game_name, g.short_name, '
             'r.id AS r_id, r.width, r.height, r.duration_sec, '
             'r.file_path, r.thumbnail_path, r.generated_name AS r_name, r.file_size_mb '
@@ -194,11 +195,16 @@ def catalog():
         params = []
 
         for col, arg in [('c.game_id', 'game'), ('c.type', 'type'),
-                         ('c.seasonal_tag', 'seasonal'), ('c.status', 'status')]:
+                         ('c.status', 'status')]:
             val = request.args.get(arg)
             if val:
                 q += f' AND {col} = ?'
                 params.append(val)
+
+        tag_filter = request.args.get('tag')
+        if tag_filter:
+            q += " AND (',' || c.tags || ',') LIKE ?"
+            params.append(f'%,{tag_filter},%')
 
         search = request.args.get('search', '').strip()
         if search:
@@ -233,10 +239,10 @@ def catalog():
             concept = {
                 'id': c_id,
                 'seq_number': r['seq_number'],
-                'seasonal_tag': r['seasonal_tag'],
                 'concept_name': r['concept_name'],
                 'status': r['status'],
                 'networks': [n for n in (r['networks'] or '').split(',') if n],
+                'tags': [t for t in (r['tags'] or '').split(',') if t],
                 'renditions': [],
             }
             tree[gkey]['types'][tkey].append(concept)
@@ -254,11 +260,11 @@ def catalog():
                 'file_size_mb': r['file_size_mb'],
             })
 
-    filters = {k: request.args.get(k, '') for k in ('game', 'type', 'seasonal', 'status', 'search')}
+    filters = {k: request.args.get(k, '') for k in ('game', 'type', 'tag', 'status', 'search')}
     return render_template('catalog.html', tree=tree, games=games_list,
                            filters=filters, types=CREATIVE_TYPES,
-                           seasonal_tags=SEASONAL_TAGS, statuses=STATUSES,
-                           networks=NETWORKS)
+                           statuses=STATUSES, networks=NETWORKS,
+                           tags=TAGS)
 
 
 @app.route('/create', methods=['GET', 'POST'])
@@ -267,12 +273,13 @@ def create():
         with get_db() as db:
             games_list = db.execute('SELECT * FROM games ORDER BY short_name').fetchall()
         return render_template('create.html', games=games_list,
-                               types=CREATIVE_TYPES, seasonal_tags=SEASONAL_TAGS)
+                               types=CREATIVE_TYPES, tags=TAGS)
 
     # ── POST ──
     game_id = request.form.get('game_id', type=int)
     creative_type = request.form.get('type')
-    seasonal_tag = request.form.get('seasonal_tag', 'STD')
+    selected_tags = request.form.getlist('tags')
+    tags_str = ','.join(t for t in selected_tags if t in TAGS)
     description = request.form.get('description', '').strip()
     width = request.form.get('width', type=int)
     height = request.form.get('height', type=int)
@@ -290,7 +297,7 @@ def create():
             return redirect(url_for('create'))
 
         seq = get_next_seq(db, game_id, creative_type)
-        cname = make_concept_name(creative_type, seq, seasonal_tag,
+        cname = make_concept_name(creative_type, seq,
                                   game['code_1c'], game['short_name'])
         rname = make_rendition_name(cname, creative_type, width, height, duration_sec)
 
@@ -311,9 +318,9 @@ def create():
 
         # Insert concept
         cur = db.execute(
-            'INSERT INTO creatives (game_id,type,seq_number,seasonal_tag,concept_name,description) '
+            'INSERT INTO creatives (game_id,type,seq_number,concept_name,description,tags) '
             'VALUES (?,?,?,?,?,?)',
-            (game_id, creative_type, seq, seasonal_tag, cname, description),
+            (game_id, creative_type, seq, cname, description, tags_str),
         )
         creative_id = cur.lastrowid
 
@@ -411,11 +418,11 @@ def api_quick_add():
         if not game:
             return jsonify(error='game not found'), 404
         seq = get_next_seq(db, game_id, ctype)
-        cname = make_concept_name(ctype, seq, 'STD', game['code_1c'], game['short_name'])
+        cname = make_concept_name(ctype, seq, game['code_1c'], game['short_name'])
         db.execute(
-            'INSERT INTO creatives (game_id,type,seq_number,seasonal_tag,concept_name) '
-            'VALUES (?,?,?,?,?)',
-            (game_id, ctype, seq, 'STD', cname),
+            'INSERT INTO creatives (game_id,type,seq_number,concept_name) '
+            'VALUES (?,?,?,?)',
+            (game_id, ctype, seq, cname),
         )
     return jsonify(ok=True, concept_name=cname, seq=seq)
 
@@ -452,6 +459,26 @@ def api_toggle_network(cid):
         val = ','.join(current)
         db.execute('UPDATE creatives SET networks=? WHERE id=?', (val, cid))
     return jsonify(networks=current)
+
+
+@app.route('/api/creatives/<int:cid>/tags', methods=['PATCH'])
+def api_toggle_tag(cid):
+    data = request.get_json(silent=True) or {}
+    tag = data.get('tag')
+    if tag not in TAGS:
+        return jsonify(error='invalid tag'), 400
+    with get_db() as db:
+        row = db.execute('SELECT tags FROM creatives WHERE id=?', (cid,)).fetchone()
+        if not row:
+            return jsonify(error='not found'), 404
+        current = [t for t in (row['tags'] or '').split(',') if t]
+        if tag in current:
+            current.remove(tag)
+        else:
+            current.append(tag)
+        val = ','.join(current)
+        db.execute('UPDATE creatives SET tags=? WHERE id=?', (val, cid))
+    return jsonify(tags=current)
 
 
 @app.route('/api/creatives/<int:cid>/status', methods=['PATCH'])

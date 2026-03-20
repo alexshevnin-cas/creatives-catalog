@@ -30,10 +30,10 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="seasonal_tag">Сезонность</label>
-                <select name="seasonal_tag" id="seasonal_tag" onchange="updatePreview()">
-                    {% for s in seasonal_tags %}
-                    <option value="{{ s }}">{{ s }}</option>
+                <label for="tags">Теги</label>
+                <select name="tags" id="tags" multiple>
+                    {% for t in tags %}
+                    <option value="{{ t }}">{{ t }}</option>
                     {% endfor %}
                 </select>
             </div>

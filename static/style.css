@@ -250,7 +250,29 @@ select { cursor: pointer; }
 .badge-type-video { background: #ddf4ff; color: var(--accent); }
 .badge-type-banner { background: #fff1e5; color: var(--orange); }
 .badge-type-playable { background: #fbefff; color: var(--purple); }
-.badge-seasonal { background: #fff8c5; color: var(--yellow); }
+/* ── Tag badges ──────────────────────────────────────────────────────────── */
+.tags-cell { white-space: nowrap; }
+
+.badge-tag {
+    display: inline-block;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    cursor: pointer;
+    margin: 1px;
+    background: var(--bg-elevated);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    transition: all 0.15s;
+    user-select: none;
+}
+.badge-tag:hover { border-color: var(--text-muted); }
+.badge-tag-on {
+    background: #fff8c5;
+    color: var(--yellow);
+    border-color: #e4d191;
+}
 
 /* ── Status select ───────────────────────────────────────────────────────── */
 .status-select {

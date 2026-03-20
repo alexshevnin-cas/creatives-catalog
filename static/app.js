@@ -93,7 +93,6 @@ function updatePreview() {
     if (!nameEl) return;
 
     const type = document.getElementById('type')?.value;
-    const seasonal = document.getElementById('seasonal_tag')?.value || 'STD';
     const width = document.getElementById('width')?.value;
     const height = document.getElementById('height')?.value;
     const duration = document.getElementById('duration_sec')?.value;
@@ -103,18 +102,17 @@ function updatePreview() {
         return;
     }
 
-    const tag = seasonal === 'STD' ? '' : seasonal;
     const n = String(currentSeq).padStart(3, '0');
     const size = width && height ? `_${width}x${height}` : '';
     const dur = duration ? `_${duration}s` : '';
 
     let name = '';
     if (type === 'Video') {
-        name = `V${n}${tag}_${currentCode1c}_${currentShortName}${size}${dur}`;
+        name = `V${n}_${currentCode1c}_${currentShortName}${size}${dur}`;
     } else if (type === 'Banner') {
-        name = `B${n}${tag}_${currentCode1c}_${currentShortName}${size}`;
+        name = `B${n}_${currentCode1c}_${currentShortName}${size}`;
     } else if (type === 'Playable') {
-        name = `PLAY_${n}${tag}_${currentCode1c}_${currentShortName}`;
+        name = `PLAY_${n}_${currentCode1c}_${currentShortName}`;
     }
 
     nameEl.textContent = name || '—';
@@ -149,7 +147,8 @@ function quickAdd(gameId, type) {
     const modal = document.getElementById('addModal');
     document.getElementById('m_game_id').value = gameId;
     document.getElementById('m_type').value = type;
-    document.getElementById('m_seasonal').value = 'STD';
+    const tagsSelect = document.getElementById('m_tags');
+    if (tagsSelect) { for (const opt of tagsSelect.options) opt.selected = false; }
     document.getElementById('m_file').value = '';
     document.getElementById('m_width').value = '';
     document.getElementById('m_height').value = '';
@@ -183,18 +182,16 @@ function modalUpdateName() {
     const el = document.getElementById('m_name');
     if (!el || !mSeq) { if (el) el.textContent = '—'; return; }
     const type = document.getElementById('m_type')?.value;
-    const seasonal = document.getElementById('m_seasonal')?.value || 'STD';
     const w = document.getElementById('m_width')?.value;
     const h = document.getElementById('m_height')?.value;
     const dur = document.getElementById('m_duration')?.value;
-    const tag = seasonal === 'STD' ? '' : seasonal;
     const n = String(mSeq).padStart(3, '0');
     const size = w && h ? `_${w}x${h}` : '';
     const d = dur ? `_${dur}s` : '';
     let name = '';
-    if (type === 'Video') name = `V${n}${tag}_${mCode}_${mShort}${size}${d}`;
-    else if (type === 'Banner') name = `B${n}${tag}_${mCode}_${mShort}${size}`;
-    else if (type === 'Playable') name = `PLAY_${n}${tag}_${mCode}_${mShort}`;
+    if (type === 'Video') name = `V${n}_${mCode}_${mShort}${size}${d}`;
+    else if (type === 'Banner') name = `B${n}_${mCode}_${mShort}${size}`;
+    else if (type === 'Playable') name = `PLAY_${n}_${mCode}_${mShort}`;
     el.textContent = name || '—';
 }
 
@@ -269,6 +266,23 @@ function toggleNetwork(badge) {
         .then(r => r.json())
         .then(data => {
             badge.classList.toggle('badge-net-on', data.networks.includes(net));
+        });
+}
+
+/* ── Catalog page: toggle tag ─────────────────────────────────────────────── */
+
+function toggleTag(badge) {
+    const id = badge.dataset.id;
+    const tag = badge.dataset.tag;
+
+    fetch(`/api/creatives/${id}/tags`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tag: tag }),
+    })
+        .then(r => r.json())
+        .then(data => {
+            badge.classList.toggle('badge-tag-on', data.tags.includes(tag));
         });
 }
 

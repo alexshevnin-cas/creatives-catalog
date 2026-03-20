@@ -47,7 +47,7 @@ VIDEO_RENDITIONS = [
 BANNER_RENDITIONS = [
     (1020, 500), (300, 250), (728, 90),
 ]
-SEASONALS = ['STD', 'STD', 'STD', 'UE', 'NY', 'EA']
+ALL_TAGS = ['gameplay', 'mislead', 'UGC', 'seasonal']
 STATUSES = ['Draft', 'Ready', 'Active', 'Active', 'Archived']
 
 
@@ -63,14 +63,13 @@ def make_thumb(src, dst):
         img.save(dst)
 
 
-def concept_name(ctype, seq, seasonal, code, short):
-    tag = '' if seasonal == 'STD' else seasonal
+def concept_name(ctype, seq, code, short):
     n = str(seq).zfill(3)
     if ctype == 'Video':
-        return f'V{n}{tag}_{code}_{short}'
+        return f'V{n}_{code}_{short}'
     if ctype == 'Banner':
-        return f'B{n}{tag}_{code}_{short}'
-    return f'PLAY_{n}{tag}_{code}_{short}'
+        return f'B{n}_{code}_{short}'
+    return f'PLAY_{n}_{code}_{short}'
 
 
 def rendition_name(cname, ctype, w=None, h=None, dur=None):
@@ -107,11 +106,11 @@ def main():
             game_id INTEGER NOT NULL REFERENCES games(id),
             type TEXT NOT NULL,
             seq_number INTEGER NOT NULL,
-            seasonal_tag TEXT DEFAULT 'STD',
             concept_name TEXT NOT NULL,
             description TEXT,
             status TEXT DEFAULT 'Draft',
             networks TEXT DEFAULT '',
+            tags TEXT DEFAULT '',
             created_at TEXT DEFAULT (datetime('now')),
             UNIQUE(game_id, type, seq_number)
         );
@@ -148,14 +147,14 @@ def main():
 
         for ctype in ('Video', 'Banner', 'Playable'):
           for seq in range(1, num_concepts + 1):
-            seasonal = random.choice(SEASONALS)
             status = random.choice(STATUSES)
-            cname = concept_name(ctype, seq, seasonal, code, short)
+            tags = ','.join(random.sample(ALL_TAGS, k=random.randint(0, 3)))
+            cname = concept_name(ctype, seq, code, short)
 
             cur.execute(
-                'INSERT INTO creatives (game_id,type,seq_number,seasonal_tag,concept_name,description,status) '
+                'INSERT INTO creatives (game_id,type,seq_number,concept_name,description,status,tags) '
                 'VALUES (?,?,?,?,?,?,?)',
-                (gid, ctype, seq, seasonal, cname, f'{short} {ctype} concept {seq}', status),
+                (gid, ctype, seq, cname, f'{short} {ctype} concept {seq}', status, tags),
             )
             cid = cur.lastrowid
             total_concepts += 1
