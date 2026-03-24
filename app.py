@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import hashlib
 from collections import OrderedDict
 from contextlib import contextmanager
 
@@ -28,6 +29,7 @@ STATUSES = ('Draft', 'Ready', 'Active', 'Archived')
 PLATFORMS = ('Android', 'iOS', 'Both')
 NETWORKS = ('Mintegral', 'FB', 'TikTok', 'Google Ads')
 TAGS = ('gameplay', 'mislead', 'UGC', 'seasonal')
+DIRECTIONS = ('UA', 'CP', 'DS')
 
 IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
 VIDEO_EXTENSIONS = {'.mp4', '.mov', '.avi', '.webm', '.mkv'}
@@ -67,6 +69,8 @@ def init_db():
                 db.execute("ALTER TABLE creatives ADD COLUMN networks TEXT DEFAULT ''")
             if 'tags' not in cols:
                 db.execute("ALTER TABLE creatives ADD COLUMN tags TEXT DEFAULT ''")
+            if 'uid' not in cols:
+                db.execute("ALTER TABLE creatives ADD COLUMN uid TEXT DEFAULT ''")
 
         db.executescript('''
             CREATE TABLE IF NOT EXISTS games (
@@ -82,6 +86,7 @@ def init_db():
                 game_id INTEGER NOT NULL REFERENCES games(id),
                 type TEXT NOT NULL,
                 seq_number INTEGER NOT NULL,
+                uid TEXT NOT NULL DEFAULT '',
                 concept_name TEXT NOT NULL,
                 description TEXT,
                 status TEXT DEFAULT 'Draft',
@@ -128,15 +133,21 @@ def get_next_seq(db, game_id, creative_type):
     return row[0]
 
 
-def make_concept_name(creative_type, seq, code_1c, short_name):
+def generate_uid(direction='UA'):
+    raw = os.urandom(16).hex()
+    hash6 = hashlib.sha256(raw.encode()).hexdigest()[:6]
+    return f'{hash6}{direction}'
+
+
+def make_concept_name(creative_type, seq, code_1c, short_name, uid):
     n = str(seq).zfill(3)
     if creative_type == 'Video':
-        return f'V{n}_{code_1c}_{short_name}'
+        return f'V{n}_{code_1c}_{short_name}_{uid}'
     if creative_type == 'Banner':
-        return f'B{n}_{code_1c}_{short_name}'
+        return f'B{n}_{code_1c}_{short_name}_{uid}'
     if creative_type == 'Playable':
-        return f'PLAY_{n}_{code_1c}_{short_name}'
-    return f'X{n}_{code_1c}_{short_name}'
+        return f'PLAY_{n}_{code_1c}_{short_name}_{uid}'
+    return f'X{n}_{code_1c}_{short_name}_{uid}'
 
 
 def make_rendition_name(concept_name, creative_type, width=None, height=None, duration_sec=None):
@@ -297,8 +308,9 @@ def create():
             return redirect(url_for('create'))
 
         seq = get_next_seq(db, game_id, creative_type)
+        uid = generate_uid('UA')
         cname = make_concept_name(creative_type, seq,
-                                  game['code_1c'], game['short_name'])
+                                  game['code_1c'], game['short_name'], uid)
         rname = make_rendition_name(cname, creative_type, width, height, duration_sec)
 
         # Save file
@@ -318,9 +330,9 @@ def create():
 
         # Insert concept
         cur = db.execute(
-            'INSERT INTO creatives (game_id,type,seq_number,concept_name,description,tags) '
-            'VALUES (?,?,?,?,?,?)',
-            (game_id, creative_type, seq, cname, description, tags_str),
+            'INSERT INTO creatives (game_id,type,seq_number,uid,concept_name,description,tags) '
+            'VALUES (?,?,?,?,?,?,?)',
+            (game_id, creative_type, seq, uid, cname, description, tags_str),
         )
         creative_id = cur.lastrowid
 
@@ -418,11 +430,12 @@ def api_quick_add():
         if not game:
             return jsonify(error='game not found'), 404
         seq = get_next_seq(db, game_id, ctype)
-        cname = make_concept_name(ctype, seq, game['code_1c'], game['short_name'])
+        uid = generate_uid('UA')
+        cname = make_concept_name(ctype, seq, game['code_1c'], game['short_name'], uid)
         db.execute(
-            'INSERT INTO creatives (game_id,type,seq_number,concept_name) '
-            'VALUES (?,?,?,?)',
-            (game_id, ctype, seq, cname),
+            'INSERT INTO creatives (game_id,type,seq_number,uid,concept_name) '
+            'VALUES (?,?,?,?,?)',
+            (game_id, ctype, seq, uid, cname),
         )
     return jsonify(ok=True, concept_name=cname, seq=seq)
 

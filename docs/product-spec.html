@@ -23,6 +23,7 @@
   .checkbox { margin-right: 0.3rem; }
   s { color: #656d76; }
   a { color: #0969da; }
+  em { color: #656d76; }
 </style>
 </head>
 <body>
@@ -30,19 +31,21 @@
 <h1>Creatives Catalog — Продуктовая спецификация</h1>
 
 <blockquote>
-  <p><strong>Версия:</strong> 1.0</p>
-  <p><strong>Дата:</strong> 2026-03-18</p>
+  <p><strong>Версия:</strong> 1.2</p>
+  <p><strong>Дата:</strong> 2026-03-24</p>
   <p><strong>Статус:</strong> Прототип готов, передано в разработку</p>
   <p><strong>Прототип:</strong> <a href="https://alexshevnin-cas.github.io/creatives-catalog/">https://alexshevnin-cas.github.io/creatives-catalog/</a></p>
   <p><strong>ТЗ для команды:</strong> <code>docs/technical-spec.md</code></p>
-  <p><strong>Источники:</strong> интервью Novatska (2026-03-12), Borys Shyfrin (2026-03-16), валидация на прототипе</p>
+  <p><strong>Источники:</strong> интервью Novatska (2026-03-12), Borys Shyfrin (2026-03-16), Zoriana Omelchuk (2026-03-19, демо + валидация), Team Kickoff (2026-03-24)</p>
 </blockquote>
 
 <hr>
 
 <h2>1. Проблема</h2>
 
-<p>Рекламные креативы (видео, баннеры, playables) управляются вручную: дизайнеры сдают файлы → координатор переименовывает → заливает на рекламные сети. Нет единого каталога, нет автоматизации нейминга, нет связи с аналитикой.</p>
+<p>Рекламные креативы (видео, баннеры, playables) управляются вручную: дизайнеры сдают файлы &rarr; координатор переименовывает &rarr; заливает на рекламные сети. Нет единого каталога, нет автоматизации нейминга, нет связи с аналитикой.</p>
+
+<p><strong>Job-to-be-Done:</strong> <em>&laquo;Олег Шлямович подходит и спрашивает &quot;что по Vegas Crime, какие последние концепты, геймплейные или нет?&quot; &mdash; и мне нужно ответить за 30 секунд, а не за 10 минут копания в папках.&raquo;</em> &mdash; Zoriana</p>
 
 <p><strong>Последствия:</strong></p>
 <ul>
@@ -50,6 +53,7 @@
   <li>Координатор тратит время на ручное переименование и заливку</li>
   <li>Менеджеры не видят превью креативов в контексте перформанса</li>
   <li>Нет единого реестра: что создано, что запущено, что работает</li>
+  <li>Google Drive заканчивается (~100 ГБ + ~130 ГБ на подходе) &mdash; негде хранить файлы</li>
 </ul>
 
 <hr>
@@ -57,9 +61,9 @@
 <h2>2. Цели</h2>
 
 <ol>
-  <li><strong>Единый каталог</strong> креативов с поиском, превью, метаданными и статусами — единое место, где видно что создано, в каком состоянии и куда залито</li>
-  <li><strong>Автоматический нейминг</strong> по конвенции — исключает человеческие ошибки и обеспечивает корректный проброс в аналитику (имя в каталоге = имя в Superset)</li>
-  <li><strong>Ускорение работы</strong> — удобный интерфейс с дропдаунами, автоопределением размеров, drag &amp; drop и синхронизацией с Google Drive вместо ручных операций с файлами и именами</li>
+  <li><strong>Единый каталог</strong> креативов с поиском, превью, метаданными и статусами &mdash; единое место, где видно что создано, в каком состоянии и куда залито</li>
+  <li><strong>Автоматический нейминг</strong> по конвенции &mdash; исключает человеческие ошибки и обеспечивает корректный проброс в аналитику (имя в каталоге = имя в Superset)</li>
+  <li><strong>Ускорение работы</strong> &mdash; удобный интерфейс с дропдаунами, автоопределением размеров, drag &amp; drop и загрузкой на сервер вместо ручных операций с файлами и именами</li>
 </ol>
 
 <hr>
@@ -75,12 +79,31 @@
   </tr>
   <tr>
     <td><strong>CMO</strong> (Zoriana)</td>
-    <td>Видит полную картину: все креативы в одном месте с превью, статусами и метаданными</td>
-    <td>Разрозненные папки, чаты, Superset</td>
+    <td>Видит полную картину: все креативы в одном месте с превью, статусами и метаданными. Отвечает на вопросы CEO/клиентов за 30 секунд</td>
+    <td>Разрозненные папки, чаты, Superset. Ответ занимает 10+ минут</td>
+  </tr>
+  <tr>
+    <td><strong>CEO</strong> (Олег Шлямович)</td>
+    <td>Задаёт ad-hoc вопросы: &laquo;что по игре X, какие последние концепты?&raquo;</td>
+    <td>Спрашивает Зоряну, ждёт пока она найдёт</td>
+  </tr>
+  <tr>
+    <td><strong>UA-менеджер</strong> (Vitalii Tereshchenko)</td>
+    <td>Закупает трафик, заливает креативы на сети, видит перформанс</td>
+    <td>Сам построил прототип каталога &mdash; боль настолько сильна. Имеет креды и аккаунты всех сетей</td>
   </tr>
 </table>
 
-<p>Система помогает координатору: автоматизирует нейминг, собирает все креативы в одном месте с превью и статусами, синхронизирует с Google Drive.</p>
+<p>Система помогает координатору и CMO: автоматизирует нейминг, собирает все креативы в одном месте с превью и статусами, хостит файлы на сервере (замена Google Drive).</p>
+
+<h3>Команда разработки</h3>
+
+<table>
+  <tr><th>Роль</th><th>Кто</th><th>Зона ответственности</th></tr>
+  <tr><td>Fullstack-разработчик</td><td>Ruslan Novikov</td><td>Frontend + Backend, основной исполнитель</td></tr>
+  <tr><td>DevOps/Infra</td><td>Vladimir Kapatsyn</td><td>CDN, хостинг, серверная инфраструктура</td></tr>
+  <tr><td>Консультант</td><td>Максим Телига</td><td>Опыт аналогичной системы (кросс-промо)</td></tr>
+</table>
 
 <hr>
 
@@ -92,45 +115,44 @@
   <li>Разделитель: <code>_</code> (нижнее подчёркивание)</li>
   <li>Без пробелов, без кириллицы</li>
   <li>Формат зависит от типа креатива</li>
-  <li><strong>Сеть НЕ включать в имя</strong> — источник определяется через MMP/API</li>
-  <li><strong>Сезонность — фиксированная позиция</strong> сразу после номера, без подчёркивания</li>
+  <li><strong>Сеть НЕ включать в имя</strong> &mdash; источник определяется через MMP/API</li>
   <li><strong>Размеры и длительность определяются автоматически</strong> из загруженного файла</li>
+  <li><strong>Уникальный код концепта</strong> (8 символов) добавляется в конце имени через <code>_</code>: 6 символов системного хэша + 2 символа направления (<code>UA</code> / <code>CP</code> / <code>DS</code>)</li>
+  <li><strong>Без ограничений на размер загружаемого файла</strong></li>
 </ol>
 
 <h3>Имя концепта (без размеров)</h3>
 <table>
   <tr><th>Тип</th><th>Шаблон</th><th>Пример</th></tr>
-  <tr><td>Video</td><td><code>V{NNN}{seasonal}_{код_1С}_{shortname}</code></td><td><code>V003UE_7448_CarCrash</code></td></tr>
-  <tr><td>Banner</td><td><code>B{NNN}{seasonal}_{код_1С}_{shortname}</code></td><td><code>B011_7448_CarCrash</code></td></tr>
-  <tr><td>Playable</td><td><code>PLAY_{NNN}{seasonal}_{код_1С}_{shortname}</code></td><td><code>PLAY_001_7448_CarCrash</code></td></tr>
+  <tr><td>Video</td><td><code>V{NNN}_{код_1С}_{shortname}_{uid}</code></td><td><code>V003_7448_CarCrash_a1b2c3UA</code></td></tr>
+  <tr><td>Banner</td><td><code>B{NNN}_{код_1С}_{shortname}_{uid}</code></td><td><code>B011_7448_CarCrash_d4e5f6UA</code></td></tr>
+  <tr><td>Playable</td><td><code>PLAY_{NNN}_{код_1С}_{shortname}_{uid}</code></td><td><code>PLAY_001_7448_CarCrash_g7h8i9UA</code></td></tr>
 </table>
+
+<p>Где <code>{uid}</code> = 6 символов хэша + 2 символа направления:</p>
+<ul>
+  <li><code>UA</code> &mdash; закупка (User Acquisition)</li>
+  <li><code>CP</code> &mdash; кросс-промо (Cross-Promo)</li>
+  <li><code>DS</code> &mdash; DSP</li>
+</ul>
 
 <h3>Имя рендиции (полное имя файла)</h3>
 <table>
   <tr><th>Тип</th><th>Шаблон</th><th>Пример</th></tr>
-  <tr><td>Video</td><td><code>{concept}_{WxH}_{duration}s</code></td><td><code>V003UE_7448_CarCrash_1920x1080_30s</code></td></tr>
-  <tr><td>Banner</td><td><code>{concept}_{WxH}</code></td><td><code>B011_7448_CarCrash_1020x500</code></td></tr>
-  <tr><td>Playable</td><td><code>{concept}</code></td><td><code>PLAY_001_7448_CarCrash</code></td></tr>
+  <tr><td>Video</td><td><code>{concept}_{WxH}_{duration}s</code></td><td><code>V003_7448_CarCrash_1920x1080_30s_a1b2c3UA</code></td></tr>
+  <tr><td>Banner</td><td><code>{concept}_{WxH}</code></td><td><code>B011_7448_CarCrash_1020x500_d4e5f6UA</code></td></tr>
+  <tr><td>Playable</td><td><code>{concept}</code></td><td><code>PLAY_001_7448_CarCrash_g7h8i9UA</code></td></tr>
 </table>
-
-<h3>Сезонные маркеры</h3>
-<table>
-  <tr><th>Код</th><th>Значение</th></tr>
-  <tr><td>STD</td><td>Стандартный (не отображается в имени)</td></tr>
-  <tr><td>UE</td><td>Universal Event (сезонное промо)</td></tr>
-  <tr><td>NY</td><td>New Year</td></tr>
-  <tr><td>EA</td><td>Easter</td></tr>
-</table>
-
-<p>Формат: суффикс сразу после номера без подчёркивания — <code>V003UE_...</code>. Для STD суффикс пустой — <code>V003_...</code>.</p>
 
 <h3>Иерархия сущностей</h3>
 <pre><code>Game (код 1С = 7448, "Car Crash Simulator")
- └── Creative Concept (V003 = 3-я идея)
-      └── Rendition (1920x1080_30s, 1080x1920_30s, 1280x720_15s)</code></pre>
+ └── Creative Concept (V003 = 3-я идея, tags: gameplay, UGC)
+      └── Rendition (1920x1080_30s, 1080x1920_30s, 1280x720_15s)
+           └── Deployment (Meta, TikTok, Google Ads — V1.2+)</code></pre>
 
-<p><strong>Concept</strong> — единица творческой идеи (один порядковый номер).<br>
-<strong>Rendition</strong> — адаптация под формат (разные разрешения/длительности одного концепта).</p>
+<p><strong>Concept</strong> &mdash; единица творческой идеи (один порядковый номер).<br>
+<strong>Rendition</strong> &mdash; адаптация под формат (разные разрешения/длительности одного концепта).<br>
+<strong>Deployment</strong> &mdash; факт заливки рендиции на конкретную сеть (V1.2+).</p>
 
 <hr>
 
@@ -150,15 +172,16 @@
 <table>
   <tr><th>Поле</th><th>Тип</th><th>Описание</th></tr>
   <tr><td>id</td><td>int</td><td>PK</td></tr>
-  <tr><td>game_id</td><td>FK → Game</td><td>Привязка к игре</td></tr>
+  <tr><td>game_id</td><td>FK &rarr; Game</td><td>Привязка к игре</td></tr>
   <tr><td>type</td><td>enum</td><td>Video / Banner / Playable</td></tr>
   <tr><td>seq_number</td><td>int</td><td>Порядковый номер, автоинкремент per game+type</td></tr>
-  <tr><td>seasonal_tag</td><td>enum</td><td>STD / UE / NY / EA</td></tr>
-  <tr><td>concept_name</td><td>string</td><td>Сгенерированное имя ("V003UE_7448_CarCrash")</td></tr>
+  <tr><td>uid</td><td>string</td><td>Уникальный код (8 символов: 6 хэш + 2 направление, e.g. "a1b2c3UA")</td></tr>
+  <tr><td>concept_name</td><td>string</td><td>Сгенерированное имя ("V003_7448_CarCrash_a1b2c3UA")</td></tr>
   <tr><td>status</td><td>enum</td><td>Draft / Ready / Active / Archived</td></tr>
+  <tr><td>tags</td><td>string[]</td><td>Теги: <code>gameplay</code>, <code>mislead</code>, <code>UGC</code>, <code>seasonal</code> и др.</td></tr>
   <tr><td>networks</td><td>string</td><td>Сети, куда залито ("Mintegral,FB,TikTok,Google Ads")</td></tr>
   <tr><td>created_at</td><td>datetime</td><td>Дата создания</td></tr>
-  <tr><td>created_by</td><td>FK → User</td><td>Креативщик</td></tr>
+  <tr><td>created_by</td><td>FK &rarr; User</td><td>Креативщик</td></tr>
   <tr><td colspan="2"></td><td>UNIQUE(game_id, type, seq_number)</td></tr>
 </table>
 
@@ -166,13 +189,13 @@
 <table>
   <tr><th>Поле</th><th>Тип</th><th>Описание</th></tr>
   <tr><td>id</td><td>int</td><td>PK</td></tr>
-  <tr><td>creative_id</td><td>FK → Creative</td><td>Привязка к концепту (CASCADE DELETE)</td></tr>
+  <tr><td>creative_id</td><td>FK &rarr; Creative</td><td>Привязка к концепту (CASCADE DELETE)</td></tr>
   <tr><td>width</td><td>int</td><td>Ширина (px), авто-определение</td></tr>
   <tr><td>height</td><td>int</td><td>Высота (px), авто-определение</td></tr>
   <tr><td>duration_sec</td><td>int?</td><td>Длительность (для видео), авто-определение</td></tr>
-  <tr><td>generated_name</td><td>string</td><td>Полное имя файла ("V003UE_7448_CarCrash_1920x1080_30s")</td></tr>
-  <tr><td>drive_file_id</td><td>string</td><td>Google Drive file ID</td></tr>
-  <tr><td>drive_thumbnail_url</td><td>string?</td><td>Ссылка на превью из Drive API</td></tr>
+  <tr><td>generated_name</td><td>string</td><td>Полное имя файла ("V003_7448_CarCrash_1920x1080_30s_a1b2c3UA")</td></tr>
+  <tr><td>file_path</td><td>string</td><td>Путь к файлу на сервере</td></tr>
+  <tr><td>thumbnail_path</td><td>string?</td><td>Путь к thumbnail на сервере</td></tr>
   <tr><td>file_size_mb</td><td>float</td><td>Размер файла</td></tr>
 </table>
 
@@ -187,20 +210,24 @@
          → Hanna вручную заливает на сети
          → API сетей → Superset (нейминг иногда ломается)</code></pre>
 
-<h3>Целевой (V1): Каталог + Google Drive</h3>
-<pre><code>Дизайнер → Каталог (форма: [Игра ▼] [Тип ▼] [Сезон ▼] + файл)
+<h3>Целевой (V1.0): Каталог + хранилище на сервере</h3>
+<pre><code>Дизайнер → Каталог (форма: [Игра ▼] [Тип ▼] + файл + теги)
          → Система автоименует + определяет размеры из файла
-         → Файл загружается на Google Drive в правильную папку
-         → Thumbnail подтягивается из Drive API
+         → Файл загружается на сервер CAS
+         → Thumbnail генерируется автоматически
          → Менеджер отмечает сети в каталоге
          → Координатор видит готовые файлы с правильными именами, заливает на сети
          → MMP → Superset (нейминг всегда корректный)</code></pre>
 
-<h3>Целевой (V2): Автозаливка</h3>
-<pre><code>Дизайнер → загружает в Catalog
-         → Менеджер отмечает сети + кампании
-         → Система автоматически заливает через API сетей
-         → Performance data возвращается в Catalog</code></pre>
+<h3>Целевой (V1.2): Автозаливка на сети</h3>
+<pre><code>Координатор → выбирает креатив + сети + кампании
+            → Кнопка "Залить" → API Meta / Google / TikTok / Unity
+            → Менеджер на стороне сети выбирает по имени</code></pre>
+
+<h3>Целевой (V2+): Аналитика по креативам</h3>
+<pre><code>Каталог ← Performance data (spend, ROAS, конверсии)
+       ← Retention по когорте, привлечённой креативом
+       → CMO видит: какой креатив перформит, mislead или нет</code></pre>
 
 <hr>
 
@@ -209,9 +236,9 @@
 <h3>Древовидная структура</h3>
 <pre><code>▸ CarCrash (7448)
   ▸ Video                                         [12]  [+ Добавить]
-    | #   | Сезон | Превью | Концепт              | Файлы     | Сети                    | Статус   |
-    | 012 | STD   | [img]  | V012_7448_CarCrash   | 2 файла ▸ | [Mintegral] [FB] [...]  | Draft    |
-    | 011 | STD   | [img]  | V011_7448_CarCrash   | 3 файла ▸ | [Mintegral] [FB] [...]  | Active   |
+    | #   | Теги      | Превью | Концепт              | Файлы     | Сети                    | Статус   |
+    | 012 | gameplay  | [img]  | V012_7448_CarCrash   | 2 файла ▸ | [Mintegral] [FB] [...]  | Draft    |
+    | 011 | UGC       | [img]  | V011_7448_CarCrash   | 3 файла ▸ | [Mintegral] [FB] [...]  | Active   |
     ...
                                                      └── V011_7448_CarCrash_1920x1080_30s  [Скачать]
                                                          V011_7448_CarCrash_1080x1920_30s  [Скачать]
@@ -222,18 +249,20 @@
 <h3>Принципы UI</h3>
 <ul>
   <li>Сортировка: новые концепты сверху (DESC по номеру)</li>
-  <li>Фильтры: игра, тип, сезон, статус, поиск по имени</li>
-  <li>Сети — кликабельные бейджи (toggle on/off)</li>
-  <li>Статус — дропдаун inline</li>
-  <li>Файлы — раскрывающийся список рендиций</li>
-  <li>Кнопка "+ Добавить" — модалка с предзаполненными игрой и типом</li>
-  <li>Превью — thumbnails из Google Drive API</li>
+  <li>Фильтры: игра, тип, теги, статус, поиск по имени</li>
+  <li>Теги &mdash; кликабельные бейджи (<code>gameplay</code>, <code>mislead</code>, <code>UGC</code>, <code>seasonal</code> и др.)</li>
+  <li>Сети &mdash; кликабельные бейджи (toggle on/off)</li>
+  <li>Статус &mdash; дропдаун inline</li>
+  <li>Файлы &mdash; раскрывающийся список рендиций</li>
+  <li>Кнопка "+ Добавить" &mdash; модалка с предзаполненными игрой и типом</li>
+  <li>Превью &mdash; thumbnails (генерируются на сервере)</li>
 </ul>
 
 <h3>Форма добавления (модалка)</h3>
 <ul>
-  <li>Три дропдауна в одну строку: Игра, Тип, Сезонность (предзаполнены если открыто из каталога)</li>
-  <li>Drag &amp; drop файла</li>
+  <li>Два дропдауна: Игра, Тип (предзаполнены если открыто из каталога)</li>
+  <li>Мульти-селект тегов</li>
+  <li>Drag &amp; drop файла или импорт по URL Google Drive</li>
   <li>Размеры и длительность определяются из файла автоматически</li>
   <li>Live-preview сгенерированного имени</li>
   <li>Кнопка "Добавить"</li>
@@ -241,48 +270,60 @@
 
 <hr>
 
-<h2>8. Google Drive интеграция</h2>
+<h2>8. Хранилище файлов</h2>
 
-<h3>Хранилище</h3>
-<p>Google Drive — основное хранилище файлов. Не заменяем, а интегрируемся.</p>
+<h3>Решение: собственный сервер</h3>
+<p>Google Drive заканчивается (~100 ГБ занято + ~130 ГБ от двух крупных игр на подходе). Файлы хостятся на серверах CAS.</p>
 
-<h3>Структура папок</h3>
-<pre><code>[Creatives]/
-├── CarCrash (7448)/
+<p><strong>Открытый вопрос:</strong> стоимость 1 ТБ на сервере vs Google Drive Business &mdash; узнать у Вовы.</p>
+
+<h3>Структура хранения</h3>
+<pre><code>/storage/creatives/
+├── 7448_CarCrash/
 │   ├── Video/
-│   │   ├── V001_7448_CarCrash/
-│   │   │   ├── V001_7448_CarCrash_1920x1080_30s.mp4
-│   │   │   └── V001_7448_CarCrash_1080x1920_30s.mp4
-│   │   └── V002UE_7448_CarCrash/
+│   │   ├── V001_7448_CarCrash_1920x1080_30s.mp4
+│   │   ├── V001_7448_CarCrash_1080x1920_30s.mp4
+│   │   └── ...
 │   ├── Banner/
-│   └── Playable/</code></pre>
+│   └── Playable/
+├── thumbnails/
+│   └── ... (авто-генерация)</code></pre>
 
 <h3>Thumbnails</h3>
-<p>Google Drive API отдаёт <code>thumbnailLink</code> для видео и изображений — не нужен ffmpeg, не нужно хранить превью локально.</p>
+<p>Генерируются на сервере при загрузке: Pillow для изображений, ffmpeg для видео (первый кадр).</p>
 
 <hr>
 
-<h2>9. MVP Scope</h2>
+<h2>9. Фазы</h2>
 
-<h3>V1 (в разработке)</h3>
+<h3>V1.0 — Хранилище + каталог (заменяет Google Drive)</h3>
 <ul>
-  <li>&#9745; Древовидный каталог: Игра → Тип → Концепт → Рендиции <em>(прототип)</em></li>
+  <li>&#9745; Древовидный каталог: Игра &rarr; Тип &rarr; Концепт &rarr; Рендиции <em>(прототип)</em></li>
   <li>&#9745; Автонейминг по конвенции <em>(прототип)</em></li>
   <li>&#9745; Авто-определение размеров и длительности из файла <em>(прототип)</em></li>
   <li>&#9745; Фильтры, поиск, статусы <em>(прототип)</em></li>
   <li>&#9745; Отметка сетей (Mintegral, FB, TikTok, Google Ads) <em>(прототип)</em></li>
-  <li>&#9744; Google Drive интеграция (upload + thumbnails)</li>
-  <li>&#9744; Google OAuth 2.0</li>
+  <li>&#9744; Хранилище на сервере CAS (upload + thumbnails)</li>
+  <li>&#9744; Теги (<code>gameplay</code>, <code>mislead</code>, <code>UGC</code>, <code>seasonal</code> и др.)</li>
   <li>&#9744; PostgreSQL вместо SQLite</li>
   <li>&#9744; Справочник игр (код 1С + short_name)</li>
+  <li>&#9744; Аутентификация</li>
 </ul>
 
-<h3>V2+</h3>
+<h3>V1.2 — Автозаливка на сети через API</h3>
 <ul>
-  <li>Автозаливка на рекламные сети через API</li>
-  <li>Перформанс-данные из Superset в карточке креатива</li>
-  <li>A/B-группы с автоматическим запуском</li>
-  <li>Drive watcher (фоновый импорт файлов из Drive)</li>
+  <li>Кнопка &laquo;Залить на Meta / Google / TikTok / Unity&raquo;</li>
+  <li>API интеграция с рекламными сетями (у Vitalii Tereshchenko есть креды и аккаунты)</li>
+  <li>YouTube: заливка видео по API &rarr; менеджер выбирает по имени в кампании</li>
+  <li>Meta: каталог ассетов через API</li>
+</ul>
+
+<h3>V2+ — Аналитика по креативам</h3>
+<ul>
+  <li><strong>Маркетинговые метрики:</strong> Impression &rarr; Click &rarr; Install конверсии, Spend vs ROAS</li>
+  <li><strong>Кросс-креативные сравнения:</strong> mislead vs non-mislead (конверсия высокая, retention нулевой = mislead)</li>
+  <li><strong>Продуктовые метрики на креатив:</strong> Retention по когорте, привлечённой конкретным креативом</li>
+  <li>Требуется: behavior events в SDK + атрибуция (MMP) + сведение в аналитике</li>
   <li>Маппинг старых креативов</li>
   <li>Интеграция с 1С для автосинхронизации справочника игр</li>
 </ul>
@@ -293,14 +334,20 @@
 
 <table>
   <tr><th>#</th><th>Решение</th><th>Источник</th><th>Дата</th></tr>
-  <tr><td>D1</td><td>Сеть НЕ включать в нейминг — источник из MMP</td><td>Shyfrin</td><td>2026-03-16</td></tr>
-  <tr><td>D2</td><td>Сезонность — фиксированная позиция после номера</td><td>Shyfrin</td><td>2026-03-16</td></tr>
+  <tr><td>D1</td><td>Сеть НЕ включать в нейминг &mdash; источник из MMP</td><td>Shyfrin</td><td>2026-03-16</td></tr>
+  <tr><td>D2</td><td><s>Сезонность &mdash; фиксированная позиция после номера</s> &rarr; <strong>убрана из нейминга</strong>, заменена тегом <code>seasonal</code></td><td>Zoriana + Alexei</td><td>2026-03-19</td></tr>
   <tr><td>D3</td><td>Старые креативы не переименовывать в сетях</td><td>Shyfrin + Alexei</td><td>2026-03-16</td></tr>
   <tr><td>D4</td><td>Сезонная вариация = новый концепт (новый порядковый номер)</td><td>Shyfrin</td><td>2026-03-16</td></tr>
-  <tr><td>D5</td><td>Google Drive как хранилище, не заменяем</td><td>Alexei</td><td>2026-03-18</td></tr>
-  <tr><td>D6</td><td>Thumbnails из Drive API, не храним локально</td><td>Alexei</td><td>2026-03-18</td></tr>
+  <tr><td>D5</td><td><s>Google Drive как хранилище</s> &rarr; <strong>собственный сервер</strong> (Drive заканчивается)</td><td>Zoriana</td><td>2026-03-19</td></tr>
+  <tr><td>D6</td><td>Thumbnails генерируются на сервере (Pillow/ffmpeg)</td><td>Zoriana</td><td>2026-03-19</td></tr>
   <tr><td>D7</td><td>Три типа: Video, Banner, Playable (StoreVideo убран)</td><td>Валидация на прототипе</td><td>2026-03-18</td></tr>
-  <tr><td>D8</td><td>Размеры и длительность — авто-определение из файла</td><td>Валидация на прототипе</td><td>2026-03-18</td></tr>
+  <tr><td>D8</td><td>Размеры и длительность &mdash; авто-определение из файла</td><td>Валидация на прототипе</td><td>2026-03-18</td></tr>
+  <tr><td>D9</td><td>Каталог, не бот &mdash; однозначно</td><td>Zoriana</td><td>2026-03-19</td></tr>
+  <tr><td>D10</td><td>Теги вместо сезонности: <code>gameplay</code>, <code>mislead</code>, <code>UGC</code>, <code>seasonal</code></td><td>Zoriana</td><td>2026-03-19</td></tr>
+  <tr><td>D11</td><td>Фазирование: V1.0 (хранилище+каталог) &rarr; V1.2 (API сети) &rarr; V2+ (аналитика)</td><td>Zoriana</td><td>2026-03-19</td></tr>
+  <tr><td>D12</td><td>Уникальный код концепта (6 символов хэш + 2 символа направления) в конце имени через <code>_</code></td><td>Team Kickoff</td><td>2026-03-24</td></tr>
+  <tr><td>D13</td><td>Направления: <code>UA</code> (закупка), <code>CP</code> (кросс-промо), <code>DS</code> (DSP)</td><td>Team Kickoff</td><td>2026-03-24</td></tr>
+  <tr><td>D14</td><td>Без ограничений на размер загружаемого файла</td><td>Team Kickoff</td><td>2026-03-24</td></tr>
 </table>
 
 <hr>
@@ -308,13 +355,29 @@
 <h2>11. Открытые вопросы</h2>
 
 <ol>
-  <li><s><strong>Каталог или бот?</strong></s> → Каталог + Google Drive интеграция (решено на прототипе)</li>
-  <li><strong>Лимиты длины имени</strong> по рекламным сетям (Meta, Google Ads, Unity, Mintegral, TikTok) — нужно исследование</li>
-  <li><strong>Zoriana Omelchuk (CMO)</strong> — показать прототип, подтвердить скоуп, верифицировать процесс</li>
-  <li><strong>Топовый UA-менеджер (Виталий)</strong> — верифицировать реальный процесс на уровне исполнителей</li>
-  <li><strong>PlayTurbo/Mintegral playables</strong> — загружаются отдельным путём, как учитывать?</li>
-  <li><strong>Права доступа</strong> — кто может загружать, кто может менять статус?</li>
+  <li><s><strong>Каталог или бот?</strong></s> &rarr; Каталог с хранилищем на сервере (решено)</li>
+  <li><strong>Лимиты длины имени</strong> по рекламным сетям (Meta, Google Ads, Unity, Mintegral, TikTok) &mdash; нужно исследование. Особенно актуально после добавления 8-символьного uid в конце</li>
+  <li><s><strong>Zoriana Omelchuk (CMO)</strong></s> &rarr; показан прототип, скоуп подтверждён (2026-03-19)</li>
+  <li><strong>Vitalii Tereshchenko (UA)</strong> &mdash; посмотреть его прототип каталога, переиспользовать что можно. У него есть креды сетей</li>
+  <li><strong>PlayTurbo/Mintegral playables</strong> &mdash; загружаются отдельным путём, как учитывать?</li>
+  <li><strong>Права доступа</strong> &mdash; кто может загружать, кто может менять статус?</li>
+  <li><strong>Стоимость хостинга</strong> &mdash; узнать у Вовы: 1 ТБ на сервере vs Google Drive Business</li>
+  <li><strong>Уникальный код в сетях</strong> &mdash; как uid попадает в рекламные сети? Не сломает ли матчинг в Superset? Не обрежут ли сети?</li>
+  <li><strong>Ориентация в рамках концепта</strong> &mdash; нужна ли группировка рендиций по вертикальной/горизонтальной ориентации для аналитики?</li>
+  <li><strong>Формализация short_name</strong> &mdash; нужны ли правила формирования? Сейчас выбирается произвольно</li>
+  <li><strong>iOS/Android &mdash; одна игра или разные?</strong> &mdash; У iOS и Android разные коды 1С. Является ли это одной сущностью Game или двумя?</li>
+  <li><strong>Медиафайл как отдельная сущность</strong> &mdash; нужно ли отвязывать файл от кода 1С для переиспользования между платформами? (предложение Kapatsyn + Максим Телига)</li>
+  <li><strong>Сжатие при загрузке</strong> &mdash; нужно ли? Сети вероятно сами пережимают, но уточнить ограничения на вход</li>
+  <li><strong>Правила архивации</strong> &mdash; что происходит со старыми файлами? Когда и как переносить в архив? Узнать текущие правила у Ани</li>
 </ol>
+
+<hr>
+
+<h2>12. Организационный риск</h2>
+
+<p><em>&laquo;Технически несложно. Очень сложно организационно.&raquo;</em> &mdash; Zoriana</p>
+
+<p>Согласование конвенций между командами, единообразная разметка тегов, обновление приложений. Людской фактор.</p>
 
 <hr>
 
@@ -325,6 +388,10 @@
   <tr><td>Техническое задание для команды</td><td><code>docs/technical-spec.md</code></td></tr>
   <tr><td>Интервью Novatska</td><td><code>research/interview-novatska.md</code></td></tr>
   <tr><td>Интервью Shyfrin</td><td><code>research/interview-shyfrin.md</code></td></tr>
+  <tr><td>Интервью Zoriana</td><td><code>research/interview-zoriana.md</code></td></tr>
+  <tr><td>Team Kickoff (Ruslan, Kapatsyn, Максим)</td><td><code>research/interview-team-kickoff.md</code></td></tr>
+  <tr><td>Транскрипт Team Kickoff (сырой)</td><td><code>research/Creatives-Catalog-bd3bfafc-ea36.md</code></td></tr>
+  <tr><td>Market Research</td><td><code>research/creative-tools-market-research.md</code></td></tr>
   <tr><td>Прототип (статика)</td><td><a href="https://alexshevnin-cas.github.io/creatives-catalog/">https://alexshevnin-cas.github.io/creatives-catalog/</a></td></tr>
   <tr><td>Репозиторий</td><td><a href="https://github.com/alexshevnin-cas/creatives-catalog">https://github.com/alexshevnin-cas/creatives-catalog</a></td></tr>
 </table>

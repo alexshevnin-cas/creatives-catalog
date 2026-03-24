@@ -71,12 +71,12 @@
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Теги</th>
                                 <th style="width:64px;">Превью</th>
                                 <th>Концепт</th>
                                 <th>Файлы</th>
                                 <th>Сети</th>
                                 <th>Статус</th>
+                                <th>Теги</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -85,13 +85,6 @@
                             {% set first_r = concept.renditions[0] if concept.renditions else None %}
                             <tr data-id="{{ concept.id }}">
                                 <td class="text-muted"><strong>{{ '%03d'|format(concept.seq_number) }}</strong></td>
-                                <td class="tags-cell">
-                                    {% for t in tags %}
-                                    <span class="badge badge-tag{% if t in concept.tags %} badge-tag-on{% endif %}"
-                                          data-id="{{ concept.id }}" data-tag="{{ t }}"
-                                          onclick="toggleTag(this)">{{ t }}</span>
-                                    {% endfor %}
-                                </td>
                                 <td class="list-preview">
                                     {% if first_r %}
                                         {% if first_r.thumbnail_path %}
@@ -132,6 +125,13 @@
                                         <option value="{{ s }}" {% if concept.status == s %}selected{% endif %}>{{ s }}</option>
                                         {% endfor %}
                                     </select>
+                                </td>
+                                <td class="tags-cell">
+                                    {% for t in tags %}
+                                    <span class="badge badge-tag{% if t in concept.tags %} badge-tag-on{% endif %}"
+                                          data-id="{{ concept.id }}" data-tag="{{ t }}"
+                                          onclick="toggleTag(this)">{{ t }}</span>
+                                    {% endfor %}
                                 </td>
                                 <td><button class="btn btn-danger btn-sm" onclick="deleteCreative({{ concept.id }}, this)" title="Удалить">&times;</button></td>
                             </tr>
