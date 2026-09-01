@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creatives Inbox — CAS.AI</title>
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<script src="shell.js"></script>
+<script>writeShell({ active: 'inbox', title: 'Creatives Inbox' });</script>
+
+<main class="content">
+    <div class="toolbar">
+        <div class="lead">New files imported from the shared Google Drive folder. Type, concept # and apps are pre-filled from the filename &mdash; edit right in the row, no modal.</div>
+        <div class="toolbar-actions">
+            <button class="btn btn-blue" onclick="toggleDd(event)">&#10227; Import from Drive</button>
+            <div class="dropdown" id="driveDd">
+                <div class="dd-head">Recently updated folders</div>
+                <div class="dd-item" onclick="startImport('/Creatives/CarCrash/2026')"><span>&#128193; /Creatives/CarCrash/2026</span><span class="dim">2 h ago</span></div>
+                <div class="dd-item" onclick="startImport('/Creatives/CandyBlast/holiday')"><span>&#128193; /Creatives/CandyBlast/holiday</span><span class="dim">yesterday</span></div>
+                <div class="dd-item" onclick="startImport('/Creatives/Playables')"><span>&#128193; /Creatives/Playables</span><span class="dim">3 d ago</span></div>
+                <div class="dd-item" onclick="startImport('/Creatives/_incoming')"><span>&#128193; /Creatives/_incoming</span><span class="dim">5 d ago</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="filter-card">
+        <div class="filter-grid">
+            <div class="f-field f-wide"><label>Search</label>
+                <span class="search-wrap"><input type="text" id="fSearch" placeholder="Search by filename" oninput="render()"></span>
+            </div>
+            <div class="f-field"><label>From</label><input type="date" id="fFrom" onchange="render()"></div>
+            <div class="f-field"><label>To</label><input type="date" id="fTo" onchange="render()"></div>
+            <div class="f-field"><label>File type</label>
+                <select id="fType" onchange="render()">
+                    <option value="">All</option>
+                    <option>Video</option><option>Banner</option><option>Playable</option><option>Other</option>
+                </select>
+            </div>
+            <div class="f-field"><label>Folder</label>
+                <select id="fFolder" onchange="render()"><option value="">Any folder</option></select>
+            </div>
+            <div class="f-field"><label>Readiness</label>
+                <select id="fStatus" onchange="render()">
+                    <option value="">Any</option>
+                    <option>Not ready</option><option>Ready</option><option>In catalog</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="batch-bar" id="batchBar">
+        <span id="batchCount" class="muted"></span>
+        <button class="btn btn-green btn-sm" onclick="batchAdd()">Add selected to catalog</button>
+        <button class="btn-link btn-sm" onclick="batchReady()">Mark Ready</button>
+    </div>
+
+    <div class="panel panel-scroll">
+        <table class="tbl">
+            <thead><tr>
+                <th style="width:34px"><input type="checkbox" id="chkAll" onchange="toggleAll(this)"></th>
+                <th>File</th><th style="width:150px">Meta</th><th style="width:92px">Imported</th>
+                <th style="width:122px">Type</th><th style="width:64px">#</th>
+                <th style="width:190px">Apps</th><th style="width:130px">Author</th>
+                <th style="width:120px">Status</th><th style="width:150px">Actions</th>
+            </tr></thead>
+            <tbody id="rows"></tbody>
+        </table>
+    </div>
+    <div class="foot-note">Playables and unrecognized files stay in the Inbox &mdash; only video and banner go to the catalog (D18) &middot; Apps are auto-assigned by 1C code in the filename, short name as fallback (D27) &middot; Concept # is taken from the filename, not auto-incremented (D26)</div>
+</main>
+
+<script>
+var APPS = {
+    CarCrash: { code: '7448', name: 'Car Crash Simulator' },
+    ArcheryKing: { code: '1029', name: 'Archery King' },
+    BlockBuild: { code: '3056', name: 'Block Builder' },
+    BubblePop: { code: '7730', name: 'Bubble Pop Mania' },
+    CandyBlast: { code: '4215', name: 'Candy Blast' },
+    CookDash: { code: '5591', name: 'Cooking Dash' },
+    Sniper3D: { code: '6680', name: 'Sniper Elite 3D' }
+};
+var AUTHORS = ['M. Petrov', 'K. Bondar', 'D. Ivanenko', 'O. Marchenko', 'S. Kravets'];
+
+var ROWS = [
+    { file: '7448_carcrash_newyear_v13.mp4', folder: '/Creatives/CarCrash/2026/video/', thumb: 'thumb_V004NY_7448_CarCrash.png',
+      meta: 'H.264 · 1920×1080', size: '25.0 MB · 30s', created: daysAgo(1), imported: daysAgo(0),
+      type: 'Video', num: 13, apps: ['CarCrash'], auto: '1C code', author: '', status: 'Not ready' },
+    { file: 'carcrash_new_concept_v3_final.mp4', folder: '/232342/christmas-2025/video/', thumb: 'thumb_V006_7448_CarCrash.png',
+      meta: 'H.264 · 1920×1080', size: '25.0 MB · 30s', created: daysAgo(3), imported: daysAgo(1),
+      type: 'Video', num: 3, apps: ['CarCrash'], auto: 'short name', author: '', status: 'Not ready' },
+    { file: 'archeryking_banner_300x250_promo.png', folder: '/1029/q4-launch/banners/', thumb: 'thumb_B001EA_1029_ArcheryKing_300x250.png',
+      meta: 'PNG · 300×250', size: '819.2 KB', created: daysAgo(4), imported: daysAgo(2),
+      type: 'Banner', num: null, apps: ['ArcheryKing'], auto: 'short name', author: '', status: 'Not ready' },
+    { file: 'blockbuild_tutorial_60s.mp4', folder: '/BlockBuild/tutorials/en/', thumb: null,
+      meta: 'H.265 · 1920×1080', size: '45.0 MB · 60s', created: daysAgo(5), imported: daysAgo(2),
+      type: 'Video', num: 2, apps: ['BlockBuild'], auto: 'short name', author: '', status: 'Ready' },
+    { file: 'bubblepop_fail_meme_15s.mp4', folder: '/UGC/memes/', thumb: null,
+      meta: 'H.264 · 1080×1920', size: '8.0 MB · 15s', created: daysAgo(6), imported: daysAgo(3),
+      type: 'Video', num: 5, apps: ['BubblePop'], auto: 'short name', author: '', status: 'Not ready' },
+    { file: 'candyblast_holiday_banner_1200x628.jpg', folder: '/holidays/valentines/', thumb: 'thumb_B001NY_4215_CandyBlast_1020x500.png',
+      meta: 'JPEG · 1200×628', size: '1.2 MB', created: daysAgo(8), imported: daysAgo(3),
+      type: 'Banner', num: 7, apps: ['CandyBlast'], auto: 'short name', author: '', status: 'Ready' },
+    { file: 'cookdash_gameplay_trailer_30s.mp4', folder: '/CookDash/gameplay/trailers/', thumb: null,
+      meta: 'H.264 · 1920×1080', size: '22.0 MB · 30s', created: daysAgo(9), imported: daysAgo(4),
+      type: 'Video', num: 1, apps: ['CookDash'], auto: 'short name', author: '', status: 'Not ready' },
+    { file: 'carcrash_playable_html5_v2.zip', folder: '/Creatives/Playables/v2/', thumb: null,
+      meta: 'HTML5 · 1080×1920', size: '6.0 MB', created: daysAgo(10), imported: daysAgo(4),
+      type: 'Playable', num: 2, apps: ['CarCrash'], auto: 'short name', author: '', status: 'Not ready' },
+    { file: 'new_creative_final_FINAL2.mp4', folder: '/misc/drop/', thumb: null,
+      meta: 'H.264 · 1080×1920', size: '18.0 MB · 20s', created: daysAgo(12), imported: daysAgo(5),
+      type: 'Video', num: null, apps: [], auto: null, author: '', status: 'Not ready' },
+    { file: 'IMG_20260827_133702.heic', folder: '/misc/drop/', thumb: null,
+      meta: 'HEIC · 4032×3024', size: '2.9 MB', created: daysAgo(12), imported: daysAgo(5),
+      type: 'Other', num: null, apps: [], auto: null, author: '', status: 'Not ready' }
+];
+ROWS.forEach(function (r, i) { r.id = i; r.checked = false; });
+
+/* folder filter options */
+(function () {
+    var sel = document.getElementById('fFolder');
+    var seen = {};
+    ROWS.forEach(function (r) {
+        if (seen[r.folder]) return;
+        seen[r.folder] = 1;
+        var o = document.createElement('option');
+        o.value = r.folder; o.textContent = r.folder;
+        sel.appendChild(o);
+    });
+})();
+
+function statusClass(s) {
+    return s === 'Ready' ? 'st-ready' : s === 'In catalog' ? 'st-incatalog' : 'st-notready';
+}
+
+function conceptNames(r) {
+    var p = r.type === 'Video' ? 'V' : 'B';
+    return r.apps.map(function (a) {
+        return p + String(r.num).padStart(3, '0') + '_' + APPS[a].code + '_' + a + '_' + hash36(r.file + a, 6) + 'UA';
+    });
+}
+
+function render() {
+    var q = document.getElementById('fSearch').value.trim().toLowerCase();
+    var fType = document.getElementById('fType').value;
+    var fFolder = document.getElementById('fFolder').value;
+    var fStatus = document.getElementById('fStatus').value;
+    var fFrom = document.getElementById('fFrom').value ? new Date(document.getElementById('fFrom').value) : null;
+    var fTo = document.getElementById('fTo').value ? new Date(document.getElementById('fTo').value) : null;
+
+    var html = '';
+    ROWS.forEach(function (r) {
+        if (q && r.file.toLowerCase().indexOf(q) < 0) return;
+        if (fType && r.type !== fType) return;
+        if (fFolder && r.folder !== fFolder) return;
+        if (fStatus && r.status !== fStatus) return;
+        if (fFrom && r.imported < fFrom) return;
+        if (fTo && r.imported > fTo) return;
+
+        var addable = r.type === 'Video' || r.type === 'Banner';
+        var inCat = r.status === 'In catalog';
+        var thumb = r.thumb
+            ? '<div class="thumb"><img src="thumbnails/' + r.thumb + '" loading="lazy" alt=""></div>'
+            : '<div class="thumb thumb-empty">' + (r.type === 'Video' ? '&#9654;' : r.type === 'Playable' ? '&#9881;' : '&#9633;') + '</div>';
+        var appChips = r.apps.length
+            ? r.apps.map(function (a) {
+                return '<span class="chip chip-video" style="cursor:pointer" onclick="pickApps(' + r.id + ')">' + APPS[a].name + '</span>';
+              }).join('') + (r.auto ? ' <span class="auto-badge" title="Auto-assigned by ' + r.auto + ' in the filename (D27)">auto</span>' : '')
+            : '<button class="btn btn-sm" onclick="pickApps(' + r.id + ')">Pick app</button>';
+        var typeOpts = ['Video', 'Banner', 'Playable', 'Other'].map(function (t) {
+            return '<option' + (t === r.type ? ' selected' : '') + '>' + t + '</option>';
+        }).join('');
+        var authorOpts = '<option value=""' + (r.author ? '' : ' selected') + '>&mdash;</option>' + AUTHORS.map(function (a) {
+            return '<option' + (a === r.author ? ' selected' : '') + '>' + a + '</option>';
+        }).join('');
+        var action;
+        if (inCat) {
+            action = '<button class="btn btn-sm" disabled>In catalog &#10003;</button>';
+        } else if (!addable) {
+            action = '<button class="btn btn-green btn-sm" disabled title="' + (r.type === 'Playable' ? 'Playable — not in MVP 1' : 'Only video and banner go to the catalog') + '">Add to catalog</button>';
+        } else {
+            action = '<button class="btn btn-green btn-sm" onclick="addToCatalog(' + r.id + ')">Add to catalog &rsaquo;</button>';
+        }
+
+        html += '<tr style="' + (inCat ? 'opacity:0.45' : '') + '">' +
+            '<td><input type="checkbox" ' + (r.checked ? 'checked' : '') + ' onchange="ROWS[' + r.id + '].checked=this.checked;updateBatch()"></td>' +
+            '<td><div style="display:flex;gap:10px;align-items:center;min-width:230px">' + thumb +
+                '<div style="min-width:0"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:230px">' + esc(r.file) + '</div>' +
+                '<div class="dim mono small">' + esc(r.folder) + '</div></div></div></td>' +
+            '<td class="small muted">' + r.meta + '<br>' + r.size + '<br><span class="dim">Created ' + fmtDate(r.created) + '</span></td>' +
+            '<td class="muted small" style="white-space:nowrap">' + fmtDate(r.imported) + '</td>' +
+            '<td><select onchange="ROWS[' + r.id + '].type=this.value;render()"' + (inCat ? ' disabled' : '') + '>' + typeOpts + '</select></td>' +
+            '<td><input type="number" min="1" value="' + (r.num || '') + '" placeholder="&mdash;" style="width:58px" onchange="ROWS[' + r.id + '].num=parseInt(this.value)||null"' + (inCat ? ' disabled' : '') + '></td>' +
+            '<td>' + appChips + '</td>' +
+            '<td><select onchange="ROWS[' + r.id + '].author=this.value"' + (inCat ? ' disabled' : '') + '>' + authorOpts + '</select></td>' +
+            '<td><select class="status-sel ' + statusClass(r.status) + '" onchange="ROWS[' + r.id + '].status=this.value;render()"' + (inCat ? ' disabled' : '') + '>' +
+                ['Not ready', 'Ready', 'In catalog'].map(function (s) { return '<option' + (s === r.status ? ' selected' : '') + '>' + s + '</option>'; }).join('') +
+            '</select></td>' +
+            '<td>' + action + '</td>' +
+            '</tr>';
+    });
+    document.getElementById('rows').innerHTML = html || '<tr><td colspan="10"><div class="empty-state">No files match the filters.</div></td></tr>';
+    updateBatch();
+}
+
+function addToCatalog(id) {
+    var r = ROWS[id];
+    if (!r.apps.length || !r.num) {
+        toast('Pick an app and set the concept # first — the number comes from the filename or is set manually (D26)');
+        return;
+    }
+    r.status = 'In catalog';
+    r.checked = false;
+    var names = conceptNames(r);
+    toast(names.length > 1
+        ? 'Added as ' + names.length + ' concepts (one per app, same #, D26): ' + names.join(', ')
+        : 'Added to catalog as ' + names[0] + ' — full file goes to GCS, preview generated');
+    render();
+}
+
+function batchAdd() {
+    var ok = 0, skip = 0;
+    ROWS.forEach(function (r) {
+        if (!r.checked || r.status === 'In catalog') return;
+        var addable = (r.type === 'Video' || r.type === 'Banner') && r.apps.length && r.num;
+        if (addable) { r.status = 'In catalog'; r.checked = false; ok++; }
+        else skip++;
+    });
+    toast('Batch: ' + ok + ' added to catalog' + (skip ? ', ' + skip + ' skipped (missing app / #, playable or other)' : ''));
+    render();
+}
+
+function batchReady() {
+    var n = 0;
+    ROWS.forEach(function (r) {
+        if (r.checked && r.status === 'Not ready') { r.status = 'Ready'; n++; }
+    });
+    toast(n + ' marked Ready');
+    render();
+}
+
+function toggleAll(cb) {
+    ROWS.forEach(function (r) { r.checked = cb.checked; });
+    render();
+}
+
+function updateBatch() {
+    var n = ROWS.filter(function (r) { return r.checked; }).length;
+    var bar = document.getElementById('batchBar');
+    bar.classList.toggle('show', n > 0);
+    document.getElementById('batchCount').textContent = n + ' selected';
+}
+
+function pickApps(id) {
+    toast('Prototype: multi-select app picker with 1C-code search; one file → several apps creates a concept per app with the same # (D26)');
+}
+
+function toggleDd(e) {
+    e.stopPropagation();
+    document.getElementById('driveDd').classList.toggle('show');
+}
+document.addEventListener('click', function () {
+    document.getElementById('driveDd').classList.remove('show');
+});
+
+function startImport(folder) {
+    toast('Import of ' + folder + ' started in the background — files and subfolders will appear here; re-import creates no duplicates');
+}
+
+render();
+</script>
+</body>
+</html>

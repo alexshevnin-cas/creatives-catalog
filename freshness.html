@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creatives Freshness — CAS.AI</title>
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<script src="shell.js"></script>
+<script>writeShell({ active: 'freshness', title: 'Creatives Freshness' });</script>
+
+<main class="content">
+    <div class="toolbar">
+        <div class="lead">Daily Drive scan: alerts on new creatives + freshness by title &mdash; the &laquo;stock level&raquo; view for ordering new concepts from the creative team.</div>
+        <div class="toolbar-actions">
+            <button class="btn" onclick="toast('Prototype: Drive scan started — snapshot diff / Drive History API (needs a service account)')">&#10227; Scan now</button>
+            <button class="btn btn-green" onclick="toast('Prototype: freshness summary exported to Asana')">Export to Asana</button>
+        </div>
+    </div>
+
+    <div class="section-title">Notifications
+        <span class="hint">daily Drive scan &middot; last run today 06:00 &middot; Playables folder is scanned separately</span>
+    </div>
+    <div class="panel" id="alerts"></div>
+
+    <div class="section-title">Freshness by title
+        <span class="hint">sorted by recency &mdash; forgotten titles first</span>
+        <span style="flex:1"></span>
+        <span class="hint">Highlight if no new creatives for</span>
+        <input type="number" id="threshold" value="60" min="7" style="width:70px" onchange="renderTable()">
+        <span class="hint">days</span>
+        <select id="sortSel" style="width:auto" onchange="renderTable()">
+            <option value="desc">Oldest first</option>
+            <option value="asc">Newest first</option>
+        </select>
+    </div>
+    <div class="panel panel-scroll" id="freshTable"></div>
+    <div class="foot-note">Freshness is computed from <strong>dates, not concept numbers</strong> &mdash; numbers are not chronological (100 &rarr; 147 &rarr; 146 &rarr; 153 &rarr; 102) &middot; Nothing is archived or deleted: old creatives take off again (D23) &middot; New file &rarr; alert + Asana task for the UA manager, addressed by Tenjin letter (N = unassigned)</div>
+</main>
+
+<script>
+/* ── Notification feed ── */
+var ALERTS = [
+    { app: 'Car Crash Simulator', code: '7448', count: 3, kind: 'creatives', date: daysAgo(1),
+      files: ['7448_carcrash_newyear_v13.mp4', 'carcrash_new_concept_v3_final.mp4', 'carcrash_ugc_variant_15s.mp4'],
+      assignee: 'V', assigneeName: 'Vitalii T.', task: true, seen: false },
+    { app: 'Candy Blast', code: '4215', count: 1, kind: 'banner', date: daysAgo(3),
+      files: ['candyblast_holiday_banner_1200x628.jpg'],
+      assignee: 'M', assigneeName: 'Maryna R.', task: true, seen: false },
+    { app: 'Playables', code: null, count: 1, kind: 'playable', date: daysAgo(4),
+      files: ['carcrash_playable_html5_v2.zip'],
+      assignee: 'N', assigneeName: 'unassigned', task: false, seen: false },
+    { app: 'Archery King', code: '1029', count: 2, kind: 'banners', date: daysAgo(4),
+      files: ['archeryking_banner_300x250_promo.png', 'archeryking_banner_728x90.png'],
+      assignee: 'F', assigneeName: 'Filip O.', task: true, seen: true }
+];
+
+function renderAlerts() {
+    var html = '';
+    ALERTS.forEach(function (a, i) {
+        var taskCell = a.task
+            ? '<span class="small muted" style="white-space:nowrap">Asana task &#10003; <a href="#" onclick="toast(\'Prototype: opens the Asana task — no deadline, titled: new creatives, ' + fmtDate(a.date) + '\');return false">open</a></span>'
+            : '<button class="btn btn-sm" onclick="createTask(' + i + ')">Create Asana task</button>';
+        html += '<div class="alert-item">' +
+            '<span class="alert-dot' + (a.seen ? ' seen' : '') + '"></span>' +
+            '<div class="alert-body">' +
+                '<div><strong>' + a.app + '</strong>' + (a.code ? ' <span class="dim mono small">' + a.code + '</span>' : '') +
+                ' <span class="muted">&mdash; ' + a.count + ' new ' + a.kind + '</span>' +
+                ' <span class="dim small">&middot; uploaded to Drive ' + fmtDate(a.date) + '</span></div>' +
+                '<div class="alert-files">' + a.files.join(' · ') + '</div>' +
+            '</div>' +
+            '<span class="assignee" title="Tenjin letter ' + a.assignee + ' — ' + a.assigneeName + '">' + a.assignee + '</span>' +
+            taskCell +
+            (a.seen ? '<span class="dim small">seen</span>' : '<button class="btn-link btn-sm" onclick="markSeen(' + i + ')">Mark seen</button>') +
+            '</div>';
+    });
+    document.getElementById('alerts').innerHTML = html;
+}
+
+function markSeen(i) { ALERTS[i].seen = true; renderAlerts(); }
+function createTask(i) {
+    ALERTS[i].task = true;
+    toast('Asana task created for ' + ALERTS[i].app + ' — assignee by Tenjin letter "' + ALERTS[i].assignee + '", no deadline');
+    renderAlerts();
+}
+
+/* ── Freshness by title ── */
+var TITLES = [
+    ['Word Puzzle Master', '2204', 'B002', 347, 0, 0.2, false],
+    ['Stickman Warriors', '6617', 'V004', 261, 0, 0.3, true],
+    ['Zombie Survival', '3310', 'V012', 203, 0, 0.5, true],
+    ['Pet Hospital', '9951', 'B003', 168, 0, 0.4, false],
+    ['Idle Factory', '5572', 'V002', 124, 0, 0.8, true],
+    ['Racing Fever', '1133', 'V005', 90, 1, 1.0, true],
+    ['Cooking Dash', '5591', 'V001', 76, 1, 0.9, false],
+    ['Archery King', '1029', 'B004', 58, 2, 1.4, true],
+    ['Bubble Pop Mania', '7730', 'V005', 41, 3, 1.8, true],
+    ['Tower Defense Pro', '6523', 'V012', 33, 4, 2.1, true],
+    ['Merge Kingdom', '8901', 'V012', 21, 5, 2.6, true],
+    ['Candy Blast', '4215', 'B007', 9, 7, 3.4, true],
+    ['Sniper Elite 3D', '6680', 'V009', 3, 9, 4.2, true],
+    ['Car Crash Simulator', '7448', 'V013', 1, 12, 5.1, true]
+].map(function (t) {
+    var short = t[0].replace(/[^A-Za-z0-9]/g, '');
+    return { app: t[0], code: t[1], days: t[3], cnt90: t[4], avgMo: t[5], used: t[6],
+             last: t[2] + '_' + t[1] + '_' + short + '_' + hash36(t[0] + t[2], 6) + 'UA' };
+});
+
+function renderTable() {
+    var thr = parseInt(document.getElementById('threshold').value) || 60;
+    var dir = document.getElementById('sortSel').value;
+    var rows = TITLES.slice().sort(function (a, b) {
+        return dir === 'desc' ? b.days - a.days : a.days - b.days;
+    });
+
+    var html = '<table class="tbl"><thead><tr>' +
+        '<th>App</th><th>Last creative</th><th style="width:230px">Days without new</th>' +
+        '<th style="width:110px">Received 90d</th><th style="width:90px">Avg / mo</th>' +
+        '<th style="width:110px">Used</th><th style="width:150px">Actions</th>' +
+        '</tr></thead><tbody>';
+
+    rows.forEach(function (r) {
+        var cls = r.days > thr ? 'days-bad' : r.days > 30 ? 'days-warn' : 'days-ok';
+        var badge = r.days > thr ? '<span class="days-badge">' + r.days + ' days without new creatives</span>' : '';
+        var used = r.used
+            ? '<span class="small" style="color:var(--green-pill)">&#10003; used</span>'
+            : '<span class="small" style="color:var(--red)">not used</span>';
+        html += '<tr>' +
+            '<td><strong>' + r.app + '</strong> <span class="dim mono small">' + r.code + '</span></td>' +
+            '<td><span class="c-name">' + r.last + '</span><div class="dim small">' + fmtDate(daysAgo(r.days)) + '</div></td>' +
+            '<td><span class="days-num ' + cls + '">' + r.days + '</span>' + badge + '</td>' +
+            '<td class="mono muted">' + r.cnt90 + '</td>' +
+            '<td class="mono muted">' + r.avgMo.toFixed(1) + '</td>' +
+            '<td>' + used + '</td>' +
+            '<td><button class="btn-link btn-sm" onclick="toast(\'Prototype: added to the creative-team order in Asana — ' + esc(r.app) + '\')">Order creatives</button></td>' +
+            '</tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('freshTable').innerHTML = html;
+}
+
+renderAlerts();
+renderTable();
+</script>
+</body>
+</html>
