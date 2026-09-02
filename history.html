@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drive History — CAS.AI</title>
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<script src="shell.js"></script>
+<script>writeShell({ active: 'history', title: 'Drive History' });</script>
+
+<main class="content">
+    <div class="toolbar">
+        <div class="lead">What changed on Google Drive since the last sync: new files grouped by folder. Import right from an entry &mdash; only new files are pulled in, duplicates are skipped.</div>
+        <div class="toolbar-actions">
+            <span class="muted small">Last sync: today 06:00</span>
+            <button class="btn btn-blue" onclick="toast('Prototype: sync started — Drive snapshot diff; the live version needs a Drive service account (History API)')">&#10227; Sync now</button>
+        </div>
+    </div>
+
+    <div class="mock-note">&#9888; Mock for discussion &mdash; entries are illustrative, not wired to real Drive folders yet. The live version requires Drive access tokens (History API).</div>
+
+    <div class="panel" id="feed"></div>
+
+    <div class="foot-note">History is the base layer: Inbox imports are driven by it, and notifications (Slack / email / Asana tasks) will be sent on top of it later &middot; Import from an entry tops up only the new files &mdash; pressing any entry of the same folder never creates duplicates &middot; The Playables folder is scanned separately</div>
+</main>
+
+<script>
+var FEED = [
+    { folder: '/Creatives/CarCrash/2026/video', app: 'Car Crash Simulator', code: '7448', date: daysAgo(0),
+      files: ['7448_carcrash_newyear_v14.mp4', '7448_carcrash_newyear_v14_vert.mp4'],
+      imported: false, seen: false },
+    { folder: '/Creatives/CarCrash/2026/video', app: 'Car Crash Simulator', code: '7448', date: daysAgo(5),
+      files: ['7448_carcrash_newyear_v13.mp4', 'carcrash_new_concept_v3_final.mp4', 'carcrash_ugc_variant_15s.mp4'],
+      imported: true, seen: true },
+    { folder: '/holidays/valentines', app: 'Candy Blast', code: '4215', date: daysAgo(1),
+      files: ['candyblast_holiday_banner_1200x628.jpg'],
+      imported: false, seen: false },
+    { folder: '/Creatives/Playables/v2', app: 'Playables', code: null, date: daysAgo(2),
+      files: ['carcrash_playable_html5_v2.zip'],
+      imported: false, seen: false },
+    { folder: '/1029/q4-launch/banners', app: 'Archery King', code: '1029', date: daysAgo(3),
+      files: ['archeryking_banner_300x250_promo.png', 'archeryking_banner_728x90.png'],
+      imported: true, seen: true },
+    { folder: '/BlockBuild/tutorials/en', app: 'Block Builder', code: '3056', date: daysAgo(6),
+      files: ['blockbuild_tutorial_60s.mp4'],
+      imported: true, seen: true }
+];
+
+function render() {
+    var html = '';
+    FEED.forEach(function (e, i) {
+        var n = e.files.length;
+        var importBtn = e.imported
+            ? '<span class="small" style="color:var(--green-pill);white-space:nowrap">Imported &#10003;</span> ' +
+              '<button class="btn btn-sm" onclick="doImport(' + i + ')" title="Re-import tops up only new files, duplicates are skipped">Import again</button>'
+            : '<button class="btn btn-green btn-sm" onclick="doImport(' + i + ')">Import &rsaquo;</button>';
+        html += '<div class="alert-item">' +
+            '<span class="alert-dot' + (e.seen ? ' seen' : '') + '"></span>' +
+            '<div class="alert-body">' +
+                '<div><strong>' + e.app + '</strong>' + (e.code ? ' <span class="dim mono small">' + e.code + '</span>' : '') +
+                ' <span class="muted">&mdash; ' + n + ' new file' + (n > 1 ? 's' : '') + '</span>' +
+                ' <span class="dim small">&middot; added to Drive ' + fmtDate(e.date) + '</span></div>' +
+                '<div class="alert-files"><span class="dim">' + esc(e.folder) + '/</span> &middot; ' + e.files.join(' · ') + '</div>' +
+            '</div>' +
+            importBtn +
+            '<button class="btn btn-sm" onclick="toast(\'Prototype: notification on top of history — an Asana task for the UA manager (later also Slack / email)\')">Notify &rsaquo; Asana</button>' +
+            (e.seen ? '<span class="dim small">seen</span>' : '<button class="btn-link btn-sm" onclick="markSeen(' + i + ')">Mark seen</button>') +
+            '</div>';
+    });
+    document.getElementById('feed').innerHTML = html;
+}
+
+function doImport(i) {
+    var e = FEED[i];
+    var wasImported = e.imported;
+    e.imported = true;
+    e.seen = true;
+    toast(wasImported
+        ? 'Import of ' + e.folder + ': everything is already in the Inbox — 0 new files, ' + e.files.length + ' duplicates skipped'
+        : e.files.length + ' new file' + (e.files.length > 1 ? 's' : '') + ' from ' + e.folder + ' queued for import — check the Inbox; duplicates are skipped automatically');
+    render();
+}
+
+function markSeen(i) { FEED[i].seen = true; render(); }
+
+render();
+</script>
+</body>
+</html>

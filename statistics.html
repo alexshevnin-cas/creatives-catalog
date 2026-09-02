@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drive Statistics — CAS.AI</title>
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<script src="shell.js"></script>
+<script>writeShell({ active: 'stats', title: 'Drive Statistics' });</script>
+
+<main class="content">
+    <div class="toolbar">
+        <div class="lead">Google Drive statistics by folder: file counts, freshness and import results &mdash; the &laquo;stock level&raquo; view for ordering new creatives. Informational layer; the Inbox does not change it.</div>
+        <div class="toolbar-actions">
+            <span class="muted small">Last sync: today 06:00</span>
+            <button class="btn btn-green" onclick="toast('Prototype: freshness summary exported to Asana')">Export to Asana</button>
+        </div>
+    </div>
+
+    <div class="mock-note">&#9888; Mock for discussion &mdash; folder numbers are illustrative, not wired to real Drive data yet. The live version requires Drive access tokens.</div>
+
+    <div class="section-title">Folders on Google Drive
+        <span class="hint">sorted by recency &mdash; forgotten titles first</span>
+        <span style="flex:1"></span>
+        <span class="hint">Highlight if no new files for</span>
+        <input type="number" id="threshold" value="60" min="7" style="width:70px" onchange="render()">
+        <span class="hint">days</span>
+        <select id="sortSel" style="width:auto" onchange="render()">
+            <option value="desc">Oldest first</option>
+            <option value="asc">Newest first</option>
+        </select>
+    </div>
+    <div class="panel panel-scroll" id="statTable"></div>
+    <div class="foot-note">Freshness is computed from <strong>dates, not concept numbers</strong> &mdash; numbers are not chronological (100 &rarr; 147 &rarr; 146 &rarr; 153 &rarr; 102) &middot; Nothing is archived or deleted: old creatives take off again (D23) &middot; &laquo;Not imported&raquo; = files on Drive that are not yet in the Inbox</div>
+</main>
+
+<script>
+/* app, 1C code, folder, video count, image count, days since last file, imported, in catalog, avg files/mo */
+var FOLDERS = [
+    ['Word Puzzle Master', '2204', '/Creatives/WordPuzzle', 14, 6, 347, 20, 18, 0.2],
+    ['Stickman Warriors', '6617', '/Creatives/StickWar', 22, 4, 261, 26, 22, 0.3],
+    ['Zombie Survival', '3310', '/Creatives/ZombieSurv', 31, 9, 203, 38, 30, 0.5],
+    ['Pet Hospital', '9951', '/Creatives/PetHosp', 12, 8, 168, 16, 12, 0.4],
+    ['Idle Factory', '5572', '/Creatives/IdleFactory', 25, 10, 124, 30, 24, 0.8],
+    ['Racing Fever', '1133', '/Creatives/RacingFever', 40, 12, 90, 47, 40, 1.0],
+    ['Cooking Dash', '5591', '/Creatives/CookDash', 18, 5, 76, 20, 16, 0.9],
+    ['Archery King', '1029', '/1029/q4-launch', 33, 21, 58, 52, 44, 1.4],
+    ['Bubble Pop Mania', '7730', '/Creatives/BubblePop', 45, 14, 41, 55, 48, 1.8],
+    ['Tower Defense Pro', '6523', '/Creatives/TowerDef', 52, 17, 33, 65, 57, 2.1],
+    ['Merge Kingdom', '8901', '/Creatives/MergeKingdom', 61, 20, 21, 74, 62, 2.6],
+    ['Candy Blast', '4215', '/holidays + /Creatives/CandyBlast', 78, 34, 9, 104, 88, 3.4],
+    ['Sniper Elite 3D', '6680', '/Creatives/Sniper3D', 95, 28, 3, 117, 96, 4.2],
+    ['Car Crash Simulator', '7448', '/Creatives/CarCrash/2026', 130, 42, 0, 167, 140, 5.1],
+    ['Playables', null, '/Creatives/Playables', 0, 0, 2, 0, 0, 0.6]
+].map(function (t) {
+    return { app: t[0], code: t[1], folder: t[2], video: t[3], img: t[4], days: t[5],
+             imported: t[6], inCatalog: t[7], avgMo: t[8], total: t[3] + t[4] + (t[0] === 'Playables' ? 7 : 0) };
+});
+
+function render() {
+    var thr = parseInt(document.getElementById('threshold').value) || 60;
+    var dir = document.getElementById('sortSel').value;
+    var rows = FOLDERS.slice().sort(function (a, b) {
+        return dir === 'desc' ? b.days - a.days : a.days - b.days;
+    });
+
+    var html = '<table class="tbl"><thead><tr>' +
+        '<th>App / folder</th><th style="width:150px">Files on Drive</th>' +
+        '<th style="width:210px">Days without new</th><th style="width:90px">Avg / mo</th>' +
+        '<th style="width:170px">Imported to Inbox</th><th style="width:100px">In catalog</th>' +
+        '<th style="width:150px">Actions</th>' +
+        '</tr></thead><tbody>';
+
+    rows.forEach(function (r) {
+        var cls = r.days > thr ? 'days-bad' : r.days > 30 ? 'days-warn' : 'days-ok';
+        var badge = r.days > thr ? '<span class="days-badge">' + r.days + ' days without new files</span>' : '';
+        var notImported = r.total - r.imported;
+        var impCell = r.total === 0 && r.imported === 0
+            ? '<span class="dim">&mdash;</span>'
+            : '<span class="mono">' + r.imported + ' / ' + r.total + '</span>' +
+              (notImported > 0 ? ' <span class="small" style="color:var(--yellow)">' + notImported + ' not imported</span>' : ' <span class="small" style="color:var(--green-pill)">&#10003; all</span>');
+        var filesCell = r.app === 'Playables'
+            ? '<span class="mono">7</span> <span class="dim small">playable</span>'
+            : '<span class="mono">' + r.video + '</span> <span class="dim small">video</span> · <span class="mono">' + r.img + '</span> <span class="dim small">img</span>';
+        html += '<tr>' +
+            '<td><strong>' + r.app + '</strong>' + (r.code ? ' <span class="dim mono small">' + r.code + '</span>' : '') +
+                '<div class="dim mono small">' + esc(r.folder) + '</div></td>' +
+            '<td>' + filesCell + '</td>' +
+            '<td><span class="days-num ' + cls + '">' + r.days + '</span>' + badge + '</td>' +
+            '<td class="mono muted">' + r.avgMo.toFixed(1) + '</td>' +
+            '<td>' + impCell + '</td>' +
+            '<td class="mono muted">' + (r.inCatalog || '&mdash;') + '</td>' +
+            '<td><button class="btn-link btn-sm" onclick="toast(\'Prototype: added to the creative-team order in Asana — ' + esc(r.app) + '\')">Order creatives</button></td>' +
+            '</tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('statTable').innerHTML = html;
+}
+
+render();
+</script>
+</body>
+</html>

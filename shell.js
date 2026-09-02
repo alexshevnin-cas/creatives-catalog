@@ -7,8 +7,9 @@ function writeShell(opts) {
     };
     var tabs = [
         ['index.html', 'catalog', 'Catalog', ''],
+        ['history.html', 'history', 'History', '<span class="tab-dot" title="New files on Google Drive"></span>'],
         ['inbox.html', 'inbox', 'Inbox', ''],
-        ['freshness.html', 'freshness', 'Freshness', '<span class="tab-new">new</span>'],
+        ['statistics.html', 'stats', 'Statistics', '<span class="tab-new">new</span>'],
         ['games.html', 'apps', 'Applications', '']
     ];
     var tabsHtml = tabs.map(function (t) {

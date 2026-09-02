@@ -146,6 +146,25 @@ a:hover { color: #7cadff; }
     background: rgba(79,143,247,0.16); color: var(--blue);
     border-radius: 999px; padding: 1px 7px; text-transform: uppercase;
 }
+.tab-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 6px rgba(255,77,94,0.7);
+    display: inline-block;
+    align-self: flex-start;
+    margin: 2px 0 0 -2px;
+}
+
+.mock-note {
+    display: flex; align-items: center; gap: 10px;
+    border: 1px dashed var(--orange);
+    background: rgba(232,163,61,0.06);
+    color: var(--orange);
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    padding: 8px 14px;
+    margin-bottom: 14px;
+}
 
 /* ── Content ── */
 .content { padding: 18px 28px 60px; }

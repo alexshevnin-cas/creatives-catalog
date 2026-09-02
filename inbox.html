@@ -45,10 +45,13 @@
             <div class="f-field"><label>Folder</label>
                 <select id="fFolder" onchange="render()"><option value="">Any folder</option></select>
             </div>
-            <div class="f-field"><label>Readiness</label>
+            <div class="f-field"><label>Version</label>
+                <select id="fVersion" onchange="render()"><option value="">Any version</option></select>
+            </div>
+            <div class="f-field"><label>Status</label>
                 <select id="fStatus" onchange="render()">
                     <option value="">Any</option>
-                    <option>Not ready</option><option>Ready</option><option>In catalog</option>
+                    <option>Not supported</option><option>Not ready</option><option>Ready</option><option>In catalog</option>
                 </select>
             </div>
         </div>
@@ -72,7 +75,7 @@
             <tbody id="rows"></tbody>
         </table>
     </div>
-    <div class="foot-note">Playables and unrecognized files stay in the Inbox &mdash; only video and banner go to the catalog (D18) &middot; Apps are auto-assigned by 1C code in the filename, short name as fallback (D27) &middot; Concept # is taken from the filename, not auto-incremented (D26)</div>
+    <div class="foot-note">Statuses: Not supported (PDF, zip, HEIC &mdash; cannot be published) &middot; Not ready (fields incomplete) &middot; Ready (publishable) &middot; In catalog &middot; Apps are auto-assigned by 1C code in the filename, short name as fallback (D27) &middot; Concept # is taken from the filename, not auto-incremented (D26) &middot; To change the app of a published file: remove it from the catalog (&#8617;), reassign, publish again &middot; Imports are driven by the History tab; re-import never duplicates</div>
 </main>
 
 <script>
@@ -90,10 +93,10 @@ var AUTHORS = ['M. Petrov', 'K. Bondar', 'D. Ivanenko', 'O. Marchenko', 'S. Krav
 var ROWS = [
     { file: '7448_carcrash_newyear_v13.mp4', folder: '/Creatives/CarCrash/2026/video/', thumb: 'thumb_V004NY_7448_CarCrash.png',
       meta: 'H.264 · 1920×1080', size: '25.0 MB · 30s', created: daysAgo(1), imported: daysAgo(0),
-      type: 'Video', num: 13, apps: ['CarCrash'], auto: '1C code', author: '', status: 'Not ready' },
+      type: 'Video', num: 13, apps: ['CarCrash'], auto: '1C code', author: '', status: 'Ready' },
     { file: 'carcrash_new_concept_v3_final.mp4', folder: '/232342/christmas-2025/video/', thumb: 'thumb_V006_7448_CarCrash.png',
       meta: 'H.264 · 1920×1080', size: '25.0 MB · 30s', created: daysAgo(3), imported: daysAgo(1),
-      type: 'Video', num: 3, apps: ['CarCrash'], auto: 'short name', author: '', status: 'Not ready' },
+      type: 'Video', num: 3, apps: ['CarCrash'], auto: 'short name', author: '', status: 'Ready' },
     { file: 'archeryking_banner_300x250_promo.png', folder: '/1029/q4-launch/banners/', thumb: 'thumb_B001EA_1029_ArcheryKing_300x250.png',
       meta: 'PNG · 300×250', size: '819.2 KB', created: daysAgo(4), imported: daysAgo(2),
       type: 'Banner', num: null, apps: ['ArcheryKing'], auto: 'short name', author: '', status: 'Not ready' },
@@ -102,37 +105,56 @@ var ROWS = [
       type: 'Video', num: 2, apps: ['BlockBuild'], auto: 'short name', author: '', status: 'Ready' },
     { file: 'bubblepop_fail_meme_15s.mp4', folder: '/UGC/memes/', thumb: null,
       meta: 'H.264 · 1080×1920', size: '8.0 MB · 15s', created: daysAgo(6), imported: daysAgo(3),
-      type: 'Video', num: 5, apps: ['BubblePop'], auto: 'short name', author: '', status: 'Not ready' },
+      type: 'Video', num: 5, apps: ['BubblePop'], auto: 'short name', author: '', status: 'Ready' },
     { file: 'candyblast_holiday_banner_1200x628.jpg', folder: '/holidays/valentines/', thumb: 'thumb_B001NY_4215_CandyBlast_1020x500.png',
       meta: 'JPEG · 1200×628', size: '1.2 MB', created: daysAgo(8), imported: daysAgo(3),
       type: 'Banner', num: 7, apps: ['CandyBlast'], auto: 'short name', author: '', status: 'Ready' },
     { file: 'cookdash_gameplay_trailer_30s.mp4', folder: '/CookDash/gameplay/trailers/', thumb: null,
       meta: 'H.264 · 1920×1080', size: '22.0 MB · 30s', created: daysAgo(9), imported: daysAgo(4),
-      type: 'Video', num: 1, apps: ['CookDash'], auto: 'short name', author: '', status: 'Not ready' },
+      type: 'Video', num: 1, apps: ['CookDash'], auto: 'short name', author: '', status: 'Ready' },
     { file: 'carcrash_playable_html5_v2.zip', folder: '/Creatives/Playables/v2/', thumb: null,
       meta: 'HTML5 · 1080×1920', size: '6.0 MB', created: daysAgo(10), imported: daysAgo(4),
-      type: 'Playable', num: 2, apps: ['CarCrash'], auto: 'short name', author: '', status: 'Not ready' },
+      type: 'Playable', num: 2, apps: ['CarCrash'], auto: 'short name', author: '', status: 'Not supported' },
     { file: 'new_creative_final_FINAL2.mp4', folder: '/misc/drop/', thumb: null,
       meta: 'H.264 · 1080×1920', size: '18.0 MB · 20s', created: daysAgo(12), imported: daysAgo(5),
       type: 'Video', num: null, apps: [], auto: null, author: '', status: 'Not ready' },
+    { file: 'brand_guidelines_2026.pdf', folder: '/misc/drop/', thumb: null,
+      meta: 'PDF · 24 pages', size: '4.1 MB', created: daysAgo(12), imported: daysAgo(5),
+      type: 'Other', num: null, apps: [], auto: null, author: '', status: 'Not supported' },
     { file: 'IMG_20260827_133702.heic', folder: '/misc/drop/', thumb: null,
       meta: 'HEIC · 4032×3024', size: '2.9 MB', created: daysAgo(12), imported: daysAgo(5),
-      type: 'Other', num: null, apps: [], auto: null, author: '', status: 'Not ready' }
+      type: 'Other', num: null, apps: [], auto: null, author: '', status: 'Not supported' }
 ];
 ROWS.forEach(function (r, i) { r.id = i; r.checked = false; });
 
-/* folder filter options */
-(function () {
-    var sel = document.getElementById('fFolder');
+/* folder + version filter options (like on stage: versions narrow down when a folder is picked) */
+function rebuildFilterOptions() {
+    var folderSel = document.getElementById('fFolder');
+    var verSel = document.getElementById('fVersion');
+    var curFolder = folderSel.value;
     var seen = {};
     ROWS.forEach(function (r) {
         if (seen[r.folder]) return;
         seen[r.folder] = 1;
         var o = document.createElement('option');
         o.value = r.folder; o.textContent = r.folder;
-        sel.appendChild(o);
+        folderSel.appendChild(o);
     });
-})();
+    var curVer = verSel.value;
+    verSel.innerHTML = '<option value="">Any version</option>';
+    var vseen = {};
+    ROWS.forEach(function (r) {
+        if (curFolder && r.folder !== curFolder) return;
+        if (r.num == null || vseen[r.num]) return;
+        vseen[r.num] = 1;
+        var o = document.createElement('option');
+        o.value = r.num; o.textContent = 'V' + r.num;
+        verSel.appendChild(o);
+    });
+    verSel.value = vseen[curVer] ? curVer : '';
+}
+document.getElementById('fFolder').addEventListener('change', rebuildFilterOptions);
+rebuildFilterOptions();
 
 function statusClass(s) {
     return s === 'Ready' ? 'st-ready' : s === 'In catalog' ? 'st-incatalog' : 'st-notready';
@@ -153,16 +175,20 @@ function render() {
     var fFrom = document.getElementById('fFrom').value ? new Date(document.getElementById('fFrom').value) : null;
     var fTo = document.getElementById('fTo').value ? new Date(document.getElementById('fTo').value) : null;
 
+    var fVersion = document.getElementById('fVersion').value;
+
     var html = '';
     ROWS.forEach(function (r) {
         if (q && r.file.toLowerCase().indexOf(q) < 0) return;
         if (fType && r.type !== fType) return;
         if (fFolder && r.folder !== fFolder) return;
         if (fStatus && r.status !== fStatus) return;
+        if (fVersion && String(r.num) !== fVersion) return;
         if (fFrom && r.imported < fFrom) return;
         if (fTo && r.imported > fTo) return;
 
-        var addable = r.type === 'Video' || r.type === 'Banner';
+        var notSupported = r.status === 'Not supported';
+        var addable = (r.type === 'Video' || r.type === 'Banner') && !notSupported;
         var inCat = r.status === 'In catalog';
         var thumb = r.thumb
             ? '<div class="thumb"><img src="thumbnails/' + r.thumb + '" loading="lazy" alt=""></div>'
@@ -171,7 +197,7 @@ function render() {
             ? r.apps.map(function (a) {
                 return '<span class="chip chip-video" style="cursor:pointer" onclick="pickApps(' + r.id + ')">' + APPS[a].name + '</span>';
               }).join('') + (r.auto ? ' <span class="auto-badge" title="Auto-assigned by ' + r.auto + ' in the filename (D27)">auto</span>' : '')
-            : '<button class="btn btn-sm" onclick="pickApps(' + r.id + ')">Pick app</button>';
+            : (notSupported ? '<span class="dim">&mdash;</span>' : '<button class="btn btn-sm" onclick="pickApps(' + r.id + ')">Pick app</button>');
         var typeOpts = ['Video', 'Banner', 'Playable', 'Other'].map(function (t) {
             return '<option' + (t === r.type ? ' selected' : '') + '>' + t + '</option>';
         }).join('');
@@ -180,12 +206,19 @@ function render() {
         }).join('');
         var action;
         if (inCat) {
-            action = '<button class="btn btn-sm" disabled>In catalog &#10003;</button>';
+            action = '<button class="btn btn-sm" disabled>In catalog &#10003;</button>' +
+                '<button class="icon-btn" title="Remove from catalog — the file returns to Ready and can be reassigned to another app" onclick="removeFromCatalog(' + r.id + ')">&#8617;</button>';
         } else if (!addable) {
-            action = '<button class="btn btn-green btn-sm" disabled title="' + (r.type === 'Playable' ? 'Playable — not in MVP 1' : 'Only video and banner go to the catalog') + '">Add to catalog</button>';
+            action = '<button class="btn btn-green btn-sm" disabled title="' + (r.type === 'Playable' ? 'Playable — not supported yet (not in MVP 1)' : 'Not supported type — only video and images go to the catalog') + '">Add to catalog</button>';
         } else {
             action = '<button class="btn btn-green btn-sm" onclick="addToCatalog(' + r.id + ')">Add to catalog &rsaquo;</button>';
         }
+
+        var statusCell = notSupported
+            ? '<span class="chip chip-other" title="Unsupported file type (PDF, zip, HEIC…) — cannot be added to the catalog no matter what is filled in">Not supported</span>'
+            : '<select class="status-sel ' + statusClass(r.status) + '" onchange="ROWS[' + r.id + '].status=this.value;render()"' + (inCat ? ' disabled' : '') + '>' +
+                ['Not ready', 'Ready', 'In catalog'].map(function (s) { return '<option' + (s === r.status ? ' selected' : '') + '>' + s + '</option>'; }).join('') +
+              '</select>';
 
         html += '<tr style="' + (inCat ? 'opacity:0.45' : '') + '">' +
             '<td><input type="checkbox" ' + (r.checked ? 'checked' : '') + ' onchange="ROWS[' + r.id + '].checked=this.checked;updateBatch()"></td>' +
@@ -194,14 +227,12 @@ function render() {
                 '<div class="dim mono small">' + esc(r.folder) + '</div></div></div></td>' +
             '<td class="small muted">' + r.meta + '<br>' + r.size + '<br><span class="dim">Created ' + fmtDate(r.created) + '</span></td>' +
             '<td class="muted small" style="white-space:nowrap">' + fmtDate(r.imported) + '</td>' +
-            '<td><select onchange="ROWS[' + r.id + '].type=this.value;render()"' + (inCat ? ' disabled' : '') + '>' + typeOpts + '</select></td>' +
-            '<td><input type="number" min="1" value="' + (r.num || '') + '" placeholder="&mdash;" style="width:58px" onchange="ROWS[' + r.id + '].num=parseInt(this.value)||null"' + (inCat ? ' disabled' : '') + '></td>' +
+            '<td><select onchange="ROWS[' + r.id + '].type=this.value;render()"' + (inCat || notSupported ? ' disabled' : '') + '>' + typeOpts + '</select></td>' +
+            '<td><input type="number" min="1" value="' + (r.num || '') + '" placeholder="&mdash;" style="width:58px" onchange="ROWS[' + r.id + '].num=parseInt(this.value)||null"' + (inCat || notSupported ? ' disabled' : '') + '></td>' +
             '<td>' + appChips + '</td>' +
-            '<td><select onchange="ROWS[' + r.id + '].author=this.value"' + (inCat ? ' disabled' : '') + '>' + authorOpts + '</select></td>' +
-            '<td><select class="status-sel ' + statusClass(r.status) + '" onchange="ROWS[' + r.id + '].status=this.value;render()"' + (inCat ? ' disabled' : '') + '>' +
-                ['Not ready', 'Ready', 'In catalog'].map(function (s) { return '<option' + (s === r.status ? ' selected' : '') + '>' + s + '</option>'; }).join('') +
-            '</select></td>' +
-            '<td>' + action + '</td>' +
+            '<td><select onchange="ROWS[' + r.id + '].author=this.value"' + (inCat || notSupported ? ' disabled' : '') + '>' + authorOpts + '</select></td>' +
+            '<td>' + statusCell + '</td>' +
+            '<td style="white-space:nowrap">' + action + '</td>' +
             '</tr>';
     });
     document.getElementById('rows').innerHTML = html || '<tr><td colspan="10"><div class="empty-state">No files match the filters.</div></td></tr>';
@@ -223,15 +254,22 @@ function addToCatalog(id) {
     render();
 }
 
+function removeFromCatalog(id) {
+    var r = ROWS[id];
+    r.status = 'Ready';
+    toast('Removed from catalog — the file is back to Ready; reassign the app and publish again if needed');
+    render();
+}
+
 function batchAdd() {
     var ok = 0, skip = 0;
     ROWS.forEach(function (r) {
         if (!r.checked || r.status === 'In catalog') return;
-        var addable = (r.type === 'Video' || r.type === 'Banner') && r.apps.length && r.num;
+        var addable = (r.type === 'Video' || r.type === 'Banner') && r.status !== 'Not supported' && r.apps.length && r.num;
         if (addable) { r.status = 'In catalog'; r.checked = false; ok++; }
         else skip++;
     });
-    toast('Batch: ' + ok + ' added to catalog' + (skip ? ', ' + skip + ' skipped (missing app / #, playable or other)' : ''));
+    toast('Batch: ' + ok + ' added to catalog' + (skip ? ', ' + skip + ' skipped (missing app / #, not supported type)' : ''));
     render();
 }
 
