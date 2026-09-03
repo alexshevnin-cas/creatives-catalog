@@ -35,11 +35,14 @@ var FEED = [
     { folder: '/Creatives/CarCrash/2026/video', app: 'Car Crash Simulator', code: '7448', date: daysAgo(0),
       files: ['7448_carcrash_newyear_v14.mp4', '7448_carcrash_newyear_v14_vert.mp4'],
       imported: false, seen: false },
-    { folder: '/Creatives/CarCrash/2026/video', app: 'Car Crash Simulator', code: '7448', date: daysAgo(5),
-      files: ['7448_carcrash_newyear_v13.mp4', 'carcrash_new_concept_v3_final.mp4', 'carcrash_ugc_variant_15s.mp4'],
-      imported: true, seen: true },
+    { folder: '/Creatives/Sniper3D/concepts', app: 'Sniper Elite 3D', code: '6680', date: daysAgo(0),
+      files: ['6680_sniper_headshot_v10.mp4'],
+      imported: false, seen: false },
     { folder: '/holidays/valentines', app: 'Candy Blast', code: '4215', date: daysAgo(1),
       files: ['candyblast_holiday_banner_1200x628.jpg'],
+      imported: false, seen: false },
+    { folder: '/Creatives/MergeKingdom/ugc', app: 'Merge Kingdom', code: '8901', date: daysAgo(1),
+      files: ['mergekingdom_ugc_react_15s.mp4', 'mergekingdom_ugc_react_30s.mp4'],
       imported: false, seen: false },
     { folder: '/Creatives/Playables/v2', app: 'Playables', code: null, date: daysAgo(2),
       files: ['carcrash_playable_html5_v2.zip'],
@@ -47,33 +50,87 @@ var FEED = [
     { folder: '/1029/q4-launch/banners', app: 'Archery King', code: '1029', date: daysAgo(3),
       files: ['archeryking_banner_300x250_promo.png', 'archeryking_banner_728x90.png'],
       imported: true, seen: true },
+    { folder: '/Creatives/TowerDef/video', app: 'Tower Defense Pro', code: '6523', date: daysAgo(3),
+      files: ['6523_towerdef_boss_wave_v13.mp4'],
+      imported: true, seen: true },
+    { folder: '/Creatives/CarCrash/2026/video', app: 'Car Crash Simulator', code: '7448', date: daysAgo(5),
+      files: ['7448_carcrash_newyear_v13.mp4', 'carcrash_new_concept_v3_final.mp4', 'carcrash_ugc_variant_15s.mp4'],
+      imported: true, seen: true },
     { folder: '/BlockBuild/tutorials/en', app: 'Block Builder', code: '3056', date: daysAgo(6),
       files: ['blockbuild_tutorial_60s.mp4'],
+      imported: true, seen: true },
+    { folder: '/Creatives/RacingFever/drift', app: 'Racing Fever', code: '1133', date: daysAgo(6),
+      files: ['1133_racing_drift_v5.mp4', '1133_racing_drift_v5_vert.mp4', '1133_racing_banner_1020x500.png'],
+      imported: true, seen: true },
+    { folder: '/UGC/memes', app: 'Bubble Pop Mania', code: '7730', date: daysAgo(8),
+      files: ['bubblepop_fail_meme_15s.mp4'],
+      imported: true, seen: true },
+    { folder: '/Creatives/ZombieSurv/halloween', app: 'Zombie Survival', code: '3310', date: daysAgo(9),
+      files: ['3310_zombie_halloween_v12.mp4', '3310_zombie_halloween_banner_300x250.png'],
+      imported: true, seen: true },
+    { folder: '/CookDash/gameplay/trailers', app: 'Cooking Dash', code: '5591', date: daysAgo(11),
+      files: ['cookdash_gameplay_trailer_30s.mp4'],
+      imported: true, seen: true },
+    { folder: '/Creatives/WordPuzzle', app: 'Word Puzzle Master', code: '2204', date: daysAgo(14),
+      files: ['2204_wordpuzzle_daily_challenge_v2.mp4'],
       imported: true, seen: true }
 ];
 
+function dayLabel(d) {
+    var diff = Math.round((TODAY - d) / 86400000);
+    if (diff === 0) return '<span class="hd-today">Today</span> · ' + fmtDate(d);
+    if (diff === 1) return 'Yesterday · ' + fmtDate(d);
+    return fmtDate(d);
+}
+
 function render() {
+    var order = FEED.map(function (e, i) { return i; }).sort(function (a, b) {
+        return FEED[b].date - FEED[a].date;
+    });
+    /* группировка по дням: заголовок с датой и итогом за день */
+    var byDay = [];
+    order.forEach(function (i) {
+        var key = FEED[i].date.toDateString();
+        var last = byDay[byDay.length - 1];
+        if (!last || last.key !== key) {
+            last = { key: key, date: FEED[i].date, items: [] };
+            byDay.push(last);
+        }
+        last.items.push(i);
+    });
+
     var html = '';
-    FEED.forEach(function (e, i) {
-        var n = e.files.length;
-        var importBtn = e.imported
-            ? '<span class="small" style="color:var(--green-pill);white-space:nowrap">Imported &#10003;</span> ' +
-              '<button class="btn btn-sm" onclick="doImport(' + i + ')" title="Re-import tops up only new files, duplicates are skipped">Import again</button>'
-            : '<button class="btn btn-green btn-sm" onclick="doImport(' + i + ')">Import &rsaquo;</button>';
-        html += '<div class="alert-item">' +
-            '<span class="alert-dot' + (e.seen ? ' seen' : '') + '"></span>' +
-            '<div class="alert-body">' +
-                '<div><strong>' + e.app + '</strong>' + (e.code ? ' <span class="dim mono small">' + e.code + '</span>' : '') +
-                ' <span class="muted">&mdash; ' + n + ' new file' + (n > 1 ? 's' : '') + '</span>' +
-                ' <span class="dim small">&middot; added to Drive ' + fmtDate(e.date) + '</span></div>' +
-                '<div class="alert-files"><span class="dim">' + esc(e.folder) + '/</span> &middot; ' + e.files.join(' · ') + '</div>' +
-            '</div>' +
-            importBtn +
-            '<button class="btn btn-sm" onclick="toast(\'Prototype: notification on top of history — an Asana task for the UA manager (later also Slack / email)\')">Notify &rsaquo; Asana</button>' +
-            (e.seen ? '<span class="dim small">seen</span>' : '<button class="btn-link btn-sm" onclick="markSeen(' + i + ')">Mark seen</button>') +
-            '</div>';
+    byDay.forEach(function (day) {
+        var files = day.items.reduce(function (s, i) { return s + FEED[i].files.length; }, 0);
+        var folders = {};
+        day.items.forEach(function (i) { folders[FEED[i].folder] = 1; });
+        var nf = Object.keys(folders).length;
+        html += '<div class="hist-date">' + dayLabel(day.date) +
+            '<span class="hd-count">' + files + ' file' + (files > 1 ? 's' : '') +
+            ' in ' + nf + ' folder' + (nf > 1 ? 's' : '') + '</span></div>';
+        day.items.forEach(function (i) { html += entryHtml(i); });
     });
     document.getElementById('feed').innerHTML = html;
+}
+
+function entryHtml(i) {
+    var e = FEED[i];
+    var n = e.files.length;
+    var importBtn = e.imported
+        ? '<span class="small" style="color:var(--green-pill);white-space:nowrap">Imported &#10003;</span> ' +
+          '<button class="btn btn-sm" onclick="doImport(' + i + ')" title="Re-import tops up only new files, duplicates are skipped">Import again</button>'
+        : '<button class="btn btn-green btn-sm" onclick="doImport(' + i + ')">Import &rsaquo;</button>';
+    return '<div class="alert-item">' +
+        '<span class="alert-dot' + (e.seen ? ' seen' : '') + '"></span>' +
+        '<div class="alert-body">' +
+            '<div><strong>' + e.app + '</strong>' + (e.code ? ' <span class="dim mono small">' + e.code + '</span>' : '') +
+            ' <span class="muted">&mdash; ' + n + ' new file' + (n > 1 ? 's' : '') + '</span></div>' +
+            '<div class="alert-files"><span class="dim">' + esc(e.folder) + '/</span> &middot; ' + e.files.join(' · ') + '</div>' +
+        '</div>' +
+        importBtn +
+        '<button class="btn btn-sm" onclick="toast(\'Prototype: notification on top of history — an Asana task for the UA manager (later also Slack / email)\')">Notify &rsaquo; Asana</button>' +
+        (e.seen ? '<span class="dim small">seen</span>' : '<button class="btn-link btn-sm" onclick="markSeen(' + i + ')">Mark seen</button>') +
+        '</div>';
 }
 
 function doImport(i) {
