@@ -16,90 +16,145 @@
 
 <main class="content">
     <div class="toolbar">
-        <div class="lead">Google Drive statistics by folder: file counts, freshness and import results &mdash; the &laquo;stock level&raquo; view for ordering new creatives. Informational layer; the Inbox does not change it.</div>
+        <div class="lead">Google Drive statistics by folder: file counts, freshness and import results. Drive file counts and size come from the folder scan; imported / in-catalog counts update when you Import or Add to Catalog.</div>
         <div class="toolbar-actions">
-            <span class="muted small">Last sync: today 06:00</span>
-            <button class="btn btn-green" onclick="toast('Prototype: freshness summary exported to Asana')">Export to Asana</button>
+            <button class="btn btn-outline-lime" onclick="toast('Prototype: freshness summary exported to Asana')">Export to Asana</button>
         </div>
     </div>
 
-    <div class="mock-note">&#9888; Mock for discussion &mdash; folder numbers are illustrative, not wired to real Drive data yet. The live version requires Drive access tokens.</div>
-
-    <div class="section-title">Folders on Google Drive
-        <span class="hint">sorted by recency &mdash; forgotten titles first</span>
-        <span style="flex:1"></span>
-        <span class="hint">Highlight if no new files for</span>
-        <input type="number" id="threshold" value="60" min="7" style="width:70px" onchange="render()">
-        <span class="hint">days</span>
-        <select id="sortSel" style="width:auto" onchange="render()">
-            <option value="desc">Oldest first</option>
-            <option value="asc">Newest first</option>
-        </select>
+    <div class="filter-card">
+        <div class="filter-grid" style="grid-template-columns: 360px minmax(300px, 440px) 1fr auto">
+            <div class="f-field"><label>Folder</label>
+                <select id="fFolder" onchange="render()"><option value="">All folders</option></select>
+            </div>
+            <div class="f-field"><label>Search</label>
+                <span class="search-wrap"><input type="text" id="fSearch" placeholder="App, code or folder&hellip;" oninput="render()"></span>
+            </div>
+            <div></div>
+            <div class="f-field f-reset"><button class="btn" onclick="resetFilters()">Reset</button></div>
+        </div>
     </div>
-    <div class="panel panel-scroll" id="statTable"></div>
-    <div class="foot-note">Freshness is computed from <strong>dates, not concept numbers</strong> &mdash; numbers are not chronological (100 &rarr; 147 &rarr; 146 &rarr; 153 &rarr; 102) &middot; Nothing is archived or deleted: old creatives take off again (D23) &middot; &laquo;Not imported&raquo; = files on Drive that are not yet in the Inbox</div>
+
+    <div class="panel panel-scroll">
+        <div class="panel-head">
+            <div><h3>Folders on Google Drive</h3><div class="hint">sorted by recency &mdash; forgotten titles first</div></div>
+            <div class="ctl">Highlight if no new files for <input type="number" id="threshold" value="60" min="7" style="width:80px" onchange="render()"> days</div>
+        </div>
+        <div id="statTable"></div>
+    </div>
+    <div class="foot-note"><span style="color:var(--orange)">&#9888; Mock for discussion &mdash; folder numbers are illustrative, not wired to real Drive data yet.</span> Freshness is computed from <strong>dates, not concept numbers</strong> &mdash; numbers are not chronological (100 &rarr; 147 &rarr; 146 &rarr; 153 &rarr; 102) &middot; Nothing is archived or deleted: old creatives take off again (D23) &middot; &laquo;Not imported&raquo; = files on Drive that are not yet in the Inbox &middot; Actions: rescan folder &middot; import to Inbox &middot; order creatives (Asana)</div>
 </main>
 
 <script>
-/* app, 1C code, folder, video count, image count, days since last file, imported, in catalog, avg files/mo */
+/* app, 1C codes, folder, video, playable, img, other, days since last file, imported, in catalog */
 var FOLDERS = [
-    ['Word Puzzle Master', '2204', '/Creatives/WordPuzzle', 14, 6, 347, 20, 18, 0.2],
-    ['Stickman Warriors', '6617', '/Creatives/StickWar', 22, 4, 261, 26, 22, 0.3],
-    ['Zombie Survival', '3310', '/Creatives/ZombieSurv', 31, 9, 203, 38, 30, 0.5],
-    ['Pet Hospital', '9951', '/Creatives/PetHosp', 12, 8, 168, 16, 12, 0.4],
-    ['Idle Factory', '5572', '/Creatives/IdleFactory', 25, 10, 124, 30, 24, 0.8],
-    ['Racing Fever', '1133', '/Creatives/RacingFever', 40, 12, 90, 47, 40, 1.0],
-    ['Cooking Dash', '5591', '/Creatives/CookDash', 18, 5, 76, 20, 16, 0.9],
-    ['Archery King', '1029', '/1029/q4-launch', 33, 21, 58, 52, 44, 1.4],
-    ['Bubble Pop Mania', '7730', '/Creatives/BubblePop', 45, 14, 41, 55, 48, 1.8],
-    ['Tower Defense Pro', '6523', '/Creatives/TowerDef', 52, 17, 33, 65, 57, 2.1],
-    ['Merge Kingdom', '8901', '/Creatives/MergeKingdom', 61, 20, 21, 74, 62, 2.6],
-    ['Candy Blast', '4215', '/holidays + /Creatives/CandyBlast', 78, 34, 9, 104, 88, 3.4],
-    ['Sniper Elite 3D', '6680', '/Creatives/Sniper3D', 95, 28, 3, 117, 96, 4.2],
-    ['Car Crash Simulator', '7448', '/Creatives/CarCrash/2026', 130, 42, 0, 167, 140, 5.1],
-    ['Playables', null, '/Creatives/Playables', 0, 0, 2, 0, 0, 0.6]
+    ['Word Puzzle Master', '2204', '/2204 Word Puzzle Master', 14, 0, 6, 1, 347, 20, 18],
+    ['Stickman Warriors', '6617', '/6617 Stickman Warriors', 22, 0, 4, 0, 261, 26, 22],
+    ['Zombie Survival', '3310', '/3310 Zombie Survival', 31, 2, 9, 0, 203, 38, 30],
+    ['Pet Hospital', '9951', '/9951 Pet Hospital', 12, 0, 8, 0, 168, 16, 12],
+    ['Idle Factory', '5572', '/5572 Idle Factory', 25, 0, 10, 2, 124, 30, 24],
+    ['Racing Fever', '1133', '/1133 Racing Fever', 40, 1, 12, 0, 90, 47, 40],
+    ['Cooking Dash', '5591', '/5591 Cooking Dash', 18, 0, 5, 0, 76, 20, 16],
+    ['Archery King', '1029', '/1029 Archery King/q4-launch', 33, 0, 21, 1, 58, 52, 44],
+    ['Bubble Pop Mania', '7730', '/7730 Bubble Pop Mania', 45, 0, 14, 0, 41, 55, 48],
+    ['Tower Defense Pro', '6523', '/6523 Tower Defense Pro', 52, 3, 17, 0, 33, 65, 57],
+    ['Merge Kingdom', '8901', '/8901 Merge Kingdom', 61, 0, 20, 2, 21, 74, 62],
+    ['Candy Blast', '4215', '/4215 Candy Blast', 78, 0, 34, 3, 9, 104, 88],
+    ['Sniper Elite 3D', '6680', '/6680 Sniper Elite 3D', 95, 4, 28, 0, 3, 117, 96],
+    ['Car Crash Simulator', '7448 4521', '/7448-4521 Car Crash Simulator/2026', 130, 0, 42, 4, 0, 167, 140],
+    ['Playables', null, '/Creatives/Playables', 0, 7, 0, 0, 2, 0, 0]
 ].map(function (t) {
-    return { app: t[0], code: t[1], folder: t[2], video: t[3], img: t[4], days: t[5],
-             imported: t[6], inCatalog: t[7], avgMo: t[8], total: t[3] + t[4] + (t[0] === 'Playables' ? 7 : 0) };
+    var total = t[3] + t[4] + t[5] + t[6];
+    var mb = t[3] * (9 + rnd01(t[0]) * 30) + t[4] * 4.5 + t[5] * 0.6 + t[6] * 0.9;
+    var sync = new Date(TODAY); sync.setDate(sync.getDate() - 1); sync.setHours(14, 20 + Math.floor(rnd01('s' + t[0]) * 15), Math.floor(rnd01('m' + t[0]) * 60));
+    return { app: t[0], code: t[1], folder: t[2], video: t[3], play: t[4], img: t[5], other: t[6], days: t[7],
+             imported: t[8], inCatalog: t[9], total: total, size: mb, sync: sync };
 });
+var sortKey = 'days', sortDir = 'desc';
+var COLS = [
+    ['app', 'App / folder', false], ['size', 'Folder size', true], ['total', 'Files on Drive', true],
+    ['days', 'Days without new', true], ['imported', 'Imported to Inbox', true], ['inCatalog', 'In catalog', true],
+    ['sync', 'Last sync', true], ['actions', 'Actions', false]
+];
+
+(function () {
+    var sel = document.getElementById('fFolder');
+    FOLDERS.forEach(function (r) {
+        var o = document.createElement('option'); o.value = r.folder; o.textContent = r.folder; sel.appendChild(o);
+    });
+})();
+
+function resetFilters() {
+    document.getElementById('fFolder').value = '';
+    document.getElementById('fSearch').value = '';
+    render();
+}
+function setSort(k) {
+    if (sortKey === k) sortDir = sortDir === 'desc' ? 'asc' : 'desc';
+    else { sortKey = k; sortDir = k === 'app' ? 'asc' : 'desc'; }
+    render();
+}
+function fmtSize(mb) { return mb >= 1024 ? (mb / 1024).toFixed(1) + ' GB' : mb >= 1 ? mb.toFixed(1) + ' MB' : Math.round(mb * 1024) + ' KB'; }
+function fmtSync(d) {
+    var h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
+    var ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+    return (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear() + ', ' + h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + ' ' + ap;
+}
+var ICO = {
+    sync: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>',
+    imp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 20h16"/></svg>',
+    order: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 10h8"/><path d="M8 14h5"/></svg>'
+};
 
 function render() {
     var thr = parseInt(document.getElementById('threshold').value) || 60;
-    var dir = document.getElementById('sortSel').value;
-    var rows = FOLDERS.slice().sort(function (a, b) {
-        return dir === 'desc' ? b.days - a.days : a.days - b.days;
+    var fFolder = document.getElementById('fFolder').value;
+    var q = document.getElementById('fSearch').value.trim().toLowerCase();
+    var rows = FOLDERS.filter(function (r) {
+        if (fFolder && r.folder !== fFolder) return false;
+        if (q && (r.app + ' ' + (r.code || '') + ' ' + r.folder).toLowerCase().indexOf(q) < 0) return false;
+        return true;
+    }).sort(function (a, b) {
+        var va = a[sortKey], vb = b[sortKey];
+        if (typeof va === 'string') return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+        return sortDir === 'asc' ? va - vb : vb - va;
     });
 
-    var html = '<table class="tbl"><thead><tr>' +
-        '<th>App / folder</th><th style="width:150px">Files on Drive</th>' +
-        '<th style="width:210px">Days without new</th><th style="width:90px">Avg / mo</th>' +
-        '<th style="width:170px">Imported to Inbox</th><th style="width:100px">In catalog</th>' +
-        '<th style="width:150px">Actions</th>' +
-        '</tr></thead><tbody>';
+    var html = '<table class="tbl"><thead><tr>' + COLS.map(function (c) {
+        if (!c[2]) return '<th>' + c[1] + '</th>';
+        var on = sortKey === c[0];
+        return '<th class="sortable' + (on ? ' sorted' : '') + '" onclick="setSort(\'' + c[0] + '\')">' + c[1] +
+            '<span class="arr">' + (on ? (sortDir === 'desc' ? '&#9660;' : '&#9650;') : '&#8597;') + '</span></th>';
+    }).join('') + '</tr></thead><tbody>';
 
     rows.forEach(function (r) {
         var cls = r.days > thr ? 'days-bad' : r.days > 30 ? 'days-warn' : 'days-ok';
         var badge = r.days > thr ? '<span class="days-badge">' + r.days + ' days without new files</span>' : '';
         var notImported = r.total - r.imported;
-        var impCell = r.total === 0 && r.imported === 0
+        var impCell = r.total === 0 || r.imported === 0
             ? '<span class="dim">&mdash;</span>'
-            : '<span class="mono">' + r.imported + ' / ' + r.total + '</span>' +
-              (notImported > 0 ? ' <span class="small" style="color:var(--yellow)">' + notImported + ' not imported</span>' : ' <span class="small" style="color:var(--green-pill)">&#10003; all</span>');
-        var filesCell = r.app === 'Playables'
-            ? '<span class="mono">7</span> <span class="dim small">playable</span>'
-            : '<span class="mono">' + r.video + '</span> <span class="dim small">video</span> · <span class="mono">' + r.img + '</span> <span class="dim small">img</span>';
+            : '<span class="num-ok">' + r.imported + ' / ' + r.total + '</span>' +
+              (notImported > 0 ? ' <span class="small" style="color:var(--yellow)">' + notImported + ' not imported</span>' : ' <span class="small" style="color:var(--green)">&#10003; all</span>');
+        var fz = function (n, label) { return '<span class="' + (n ? '' : 'z') + '"><span class="n">' + n + '</span> ' + label + '</span>'; };
+        var filesCell = '<div class="fgrid">' + fz(r.video, 'video') + fz(r.img, 'img') + fz(r.play, 'playable') + fz(r.other, 'other') + '</div>';
+        var codes = r.code ? r.code.split(' ').map(function (c) { return '<span class="dim mono small" style="margin-left:8px">' + c + '</span>'; }).join('') : '';
         html += '<tr>' +
-            '<td><strong>' + r.app + '</strong>' + (r.code ? ' <span class="dim mono small">' + r.code + '</span>' : '') +
-                '<div class="dim mono small">' + esc(r.folder) + '</div></td>' +
+            '<td><strong>' + esc(r.app) + '</strong>' + codes + '<div class="path">' + esc(r.folder) + '</div></td>' +
+            '<td class="mono" style="text-align:right;color:var(--muted)">' + fmtSize(r.size) + '</td>' +
             '<td>' + filesCell + '</td>' +
             '<td><span class="days-num ' + cls + '">' + r.days + '</span>' + badge + '</td>' +
-            '<td class="mono muted">' + r.avgMo.toFixed(1) + '</td>' +
             '<td>' + impCell + '</td>' +
-            '<td class="mono muted">' + (r.inCatalog || '&mdash;') + '</td>' +
-            '<td><button class="btn-link btn-sm" onclick="toast(\'Prototype: added to the creative-team order in Asana — ' + esc(r.app) + '\')">Order creatives</button></td>' +
+            '<td>' + (r.inCatalog ? '<span class="num-ok">' + r.inCatalog + '</span>' : '<span class="dim">&mdash;</span>') + '</td>' +
+            '<td class="date-cell">' + fmtSync(r.sync) + '</td>' +
+            '<td style="white-space:nowrap">' +
+                '<button class="icon-btn" title="Rescan folder on Drive" onclick="toast(\'Prototype: rescanning ' + esc(r.folder) + ' — counts and size refresh after the scan\')">' + ICO.sync + '</button>' +
+                '<button class="icon-btn" title="Import folder to Inbox" onclick="toast(\'Prototype: import of ' + esc(r.folder) + ' queued — only new files, no duplicates\')">' + ICO.imp + '</button>' +
+                '<button class="icon-btn" title="Order creatives (Asana)" onclick="toast(\'Prototype: added to the creative-team order in Asana — ' + esc(r.app) + '\')">' + ICO.order + '</button>' +
+            '</td>' +
             '</tr>';
     });
     html += '</tbody></table>';
+    if (!rows.length) html = '<div class="empty-state">No folders match the filters.</div>';
     document.getElementById('statTable').innerHTML = html;
 }
 

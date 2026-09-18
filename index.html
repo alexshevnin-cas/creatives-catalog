@@ -23,8 +23,6 @@
         </div>
     </div>
 
-    <div class="mock-note">&#9888; Performance figures are a mock for discussion. Live source: <strong>ua_sync</strong> at concept &times; network level (Google Ads today, Meta loading); file-level stats appear only for files published from the catalog with their uid (D31, D34).</div>
-
     <div class="filter-card">
         <div class="filter-grid">
             <div class="f-field"><label>App</label>
@@ -77,15 +75,12 @@
             <div class="f-field f-wide"><label>Search</label>
                 <span class="search-wrap"><input type="text" id="fSearch" placeholder="Concept, file uid, 1C code or filename" oninput="render()"></span>
             </div>
-        </div>
-        <div class="filter-foot">
-            <button class="btn-link" onclick="resetFilters()">Reset</button>
-            <button class="btn btn-blue" onclick="render()">Search</button>
+            <div class="f-field f-reset"><button class="btn" onclick="resetFilters()">Reset</button></div>
         </div>
     </div>
 
     <div class="panel panel-scroll" id="catalog"></div>
-    <div class="foot-note">Every <strong>file</strong> carries its own uid, the concept name has no hash (D31) &middot; Tags live in the dictionary, not in filenames (D32) &middot; Legacy names in networks are left as they are &mdash; no file-level stats for them (D33) &middot; Stats are shown per concept &times; network; deep analysis lives in the Creative Dashboard (Superset) (D34) &middot; Analytics reads uid &rarr; app, concept, resolution, duration, author, tags through the dictionary (D35) &middot; Playables are visible in the Inbox but not in the catalog (D18)</div>
+    <div class="foot-note"><span style="color:var(--orange)">&#9888; Performance figures are a mock for discussion &mdash; live source is <strong>ua_sync</strong> at concept &times; network level (Google Ads today, Meta loading).</span> Every <strong>file</strong> carries its own uid, the concept name has no hash (D31) &middot; Tags live in the dictionary, not in filenames (D32) &middot; Legacy names in networks are left as they are &mdash; no file-level stats for them (D33) &middot; Stats are shown per concept &times; network; deep analysis lives in the Creative Dashboard (Superset) (D34) &middot; Analytics reads uid &rarr; app, concept, resolution, duration, author, tags through the dictionary (D35) &middot; Playables are visible in the Inbox but not in the catalog (D18)</div>
 </main>
 
 <script>
@@ -112,7 +107,10 @@ var openSub = {};    /* 'rr-<id>' / 'nr-<id>' -> true */
 
 fetch('data.json').then(function (r) { return r.json(); }).then(function (d) {
     DATA = d;
+    var platByCode = {};
+    d.games.forEach(function (x) { platByCode[x.code_1c] = x.platform; });
     d.tree.forEach(function (g) {
+        g.platform = platByCode[g.code_1c] || '';
         g.types = g.types.filter(function (t) { return t.type !== 'Playable'; });
         var gOff = parseInt(hash36(g.short_name, 2), 36) % 14;
         var targetCpi = 0.6 + rnd01('cpi' + g.short_name) * 1.4;   /* KPI CPI per app (mock) */
@@ -344,7 +342,7 @@ function render() {
                     : '<div class="thumb thumb-empty">' + t.type[0] + '</div>';
                 var tags = '<div class="tag-edit">' + c.tags.map(function (tg) {
                     return '<span class="chip tag tag-' + tg + '" onclick="setTag(\'' + tg + '\')">' + tg + '<span class="x" title="Remove tag" onclick="event.stopPropagation();toast(\'Prototype: tag ' + tg + ' removed from the dictionary entry\')">&times;</span></span>';
-                }).join('') + '<span class="add" onclick="event.stopPropagation();toast(\'Prototype: tags go to the dictionary, never into the filename (D32) — Motion, UA and analytics each add their own layer\')">Add tag&hellip;</span></div>';
+                }).join('') + '<span class="add" onclick="event.stopPropagation();toast(\'Prototype: tags go to the dictionary, never into the filename (D32) — Motion, UA and analytics each add their own layer\')">Add tag&hellip;</span><span class="caret">&#9660;</span></div>';
                 var fc = c.renditions.length;
 
                 gameBody += '<tr>' +
@@ -368,7 +366,7 @@ function render() {
         var gOpen = autoOpen || expanded[g.short_name];
         html += '<tr class="game-row' + (gOpen ? ' open' : '') + '" onclick="toggleKey(\'' + g.short_name + '\')">' +
             '<td colspan="9"><span class="chev' + (gOpen ? ' open' : '') + '">&#9654;</span>' +
-            esc(g.game_name) + '<span class="g-code">' + g.code_1c + '</span>' +
+            esc(g.game_name) + (g.platform ? ' <span class="muted" style="font-weight:600">&middot; ' + g.platform + '</span>' : '') + '<span class="g-code">' + g.code_1c + '</span>' +
             '<span class="g-count">(' + total + ')</span></td></tr>';
         if (gOpen) html += gameBody;
     });

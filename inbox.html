@@ -16,44 +16,47 @@
 
 <main class="content">
     <div class="toolbar">
-        <div class="lead">New files imported from the shared Google Drive folder. Type, concept # and apps are pre-filled from the filename &mdash; edit right in the row, no modal.</div>
+        <div class="lead">Files imported from Google Drive. Type, version and apps are pre-filled from the filename &mdash; edit right in the row, then Add to Catalog.</div>
         <div class="toolbar-actions">
             <button class="btn btn-blue" onclick="toggleDd(event)">&#10227; Import from Drive</button>
             <div class="dropdown" id="driveDd">
                 <div class="dd-head">Recently updated folders</div>
-                <div class="dd-item" onclick="startImport('/Creatives/CarCrash/2026')"><span>&#128193; /Creatives/CarCrash/2026</span><span class="dim">2 h ago</span></div>
-                <div class="dd-item" onclick="startImport('/Creatives/CandyBlast/holiday')"><span>&#128193; /Creatives/CandyBlast/holiday</span><span class="dim">yesterday</span></div>
+                <div class="dd-item" onclick="startImport('/13292 Arrow Puzzle Tap Out Game')"><span>&#128193; /13292 Arrow Puzzle Tap Out Game</span><span class="dim">2 h ago</span></div>
+                <div class="dd-item" onclick="startImport('/12889 Zombeat.io – juego io zombie')"><span>&#128193; /12889 Zombeat.io &ndash; juego io zombie</span><span class="dim">today</span></div>
+                <div class="dd-item" onclick="startImport('/7448-4521 Car Crash Simulator/2026')"><span>&#128193; /7448-4521 Car Crash Simulator/2026</span><span class="dim">yesterday</span></div>
                 <div class="dd-item" onclick="startImport('/Creatives/Playables')"><span>&#128193; /Creatives/Playables</span><span class="dim">3 d ago</span></div>
-                <div class="dd-item" onclick="startImport('/Creatives/_incoming')"><span>&#128193; /Creatives/_incoming</span><span class="dim">5 d ago</span></div>
             </div>
         </div>
     </div>
 
     <div class="filter-card">
-        <div class="filter-grid">
-            <div class="f-field f-wide"><label>Search</label>
-                <span class="search-wrap"><input type="text" id="fSearch" placeholder="Search by filename" oninput="render()"></span>
+        <div class="filter-grid" style="grid-template-columns: 300px 120px 130px 140px minmax(260px, 1fr) 150px minmax(260px, 1fr) auto">
+            <div class="f-field"><label>Folder</label>
+                <select id="fFolder" onchange="render()"><option value="">All folders</option></select>
             </div>
-            <div class="f-field"><label>From</label><input type="date" id="fFrom" onchange="render()"></div>
-            <div class="f-field"><label>To</label><input type="date" id="fTo" onchange="render()"></div>
+            <div class="f-field"><label>Version</label>
+                <select id="fVersion" onchange="render()"><option value="">All</option></select>
+            </div>
             <div class="f-field"><label>File type</label>
                 <select id="fType" onchange="render()">
                     <option value="">All</option>
                     <option>Video</option><option>Banner</option><option>Playable</option><option>Other</option>
                 </select>
             </div>
-            <div class="f-field"><label>Folder</label>
-                <select id="fFolder" onchange="render()"><option value="">Any folder</option></select>
-            </div>
-            <div class="f-field"><label>Version</label>
-                <select id="fVersion" onchange="render()"><option value="">Any version</option></select>
-            </div>
-            <div class="f-field"><label>Status</label>
+            <div class="f-field"><label>Catalog status</label>
                 <select id="fStatus" onchange="render()">
-                    <option value="">Any</option>
+                    <option value="">All</option>
                     <option>Not supported</option><option>Not ready</option><option>Ready</option><option>In catalog</option>
                 </select>
             </div>
+            <div class="f-field"><label>Search</label>
+                <span class="search-wrap"><input type="text" id="fSearch" placeholder="Search by filename" oninput="render()"></span>
+            </div>
+            <div class="f-field"><label>Imported</label><input type="date" id="fFrom" onchange="render()"></div>
+            <div class="f-field"><label>Apps</label>
+                <select id="fApp" onchange="render()"><option value="">All apps</option></select>
+            </div>
+            <div class="f-field f-reset"><button class="btn" onclick="resetFilters()">Reset</button></div>
         </div>
     </div>
 
@@ -67,104 +70,110 @@
         <table class="tbl">
             <thead><tr>
                 <th style="width:34px"><input type="checkbox" id="chkAll" onchange="toggleAll(this)"></th>
-                <th>File</th><th style="width:150px">Meta</th><th style="width:92px">Imported</th>
-                <th style="width:122px">Type</th><th style="width:64px">#</th>
-                <th style="width:190px">Apps</th><th style="width:130px">Author</th>
-                <th style="width:120px">Status</th><th style="width:150px">Actions</th>
+                <th>File</th><th style="width:140px">Folder</th><th style="width:150px">Meta</th>
+                <th style="width:96px">Type</th><th style="width:84px">Version</th>
+                <th style="width:120px">Status</th><th style="width:120px" class="sortable sorted">Imported<span class="arr">&#9660;</span></th>
+                <th style="width:300px">Apps</th><th style="width:200px; text-align:right">Actions</th>
             </tr></thead>
             <tbody id="rows"></tbody>
         </table>
     </div>
-    <div class="foot-note">Statuses: Not supported (PDF, zip, HEIC &mdash; cannot be published) &middot; Not ready (fields incomplete) &middot; Ready (publishable) &middot; In catalog &middot; Apps are auto-assigned by 1C code in the filename, short name as fallback (D27) &middot; Concept # is taken from the filename, not auto-incremented (D26) &middot; To change the app of a published file: remove it from the catalog (&#8617;), reassign, publish again &middot; Imports are driven by the History tab; re-import never duplicates</div>
+    <div class="foot-note">Statuses: Not supported (PDF, zip, HEIC &mdash; cannot be published) &middot; Not ready (fields incomplete) &middot; Ready (publishable) &middot; In catalog &middot; Apps are auto-assigned by 1C code in the filename, short name as fallback (D27) &middot; Concept # is taken from the filename, not auto-incremented (D26) &middot; Author is set on the concept in the catalog (D17) &middot; To change the app of a published file: remove it from the catalog (&#8617;), reassign, publish again &middot; Imports are driven by the History tab; re-import never duplicates</div>
 </main>
 
 <script>
 var APPS = {
-    CarCrash: { code: '7448', name: 'Car Crash Simulator' },
-    ArcheryKing: { code: '1029', name: 'Archery King' },
-    BlockBuild: { code: '3056', name: 'Block Builder' },
-    BubblePop: { code: '7730', name: 'Bubble Pop Mania' },
-    CandyBlast: { code: '4215', name: 'Candy Blast' },
-    CookDash: { code: '5591', name: 'Cooking Dash' },
-    Sniper3D: { code: '6680', name: 'Sniper Elite 3D' }
+    Zombeat: { code: '12889', name: 'Zombeat.io – juego io zombie', plat: 'Android' },
+    ArrowPuzzle: { code: '13292', name: 'Arrow Puzzle Tap Out Game', plat: 'Android' },
+    CarCrash: { code: '7448', name: 'Car Crash Simulator', plat: 'Android' },
+    KongKaiju: { code: '1246', name: 'Kong vs Kaiju: Monster Battle', plat: 'Android' },
+    ArcheryKing: { code: '1029', name: 'Archery King', plat: 'Android' },
+    CandyBlast: { code: '4215', name: 'Candy Blast', plat: 'iOS' },
+    BubblePop: { code: '7730', name: 'Bubble Pop Mania', plat: 'Android' }
 };
-var AUTHORS = ['M. Petrov', 'K. Bondar', 'D. Ivanenko', 'O. Marchenko', 'S. Kravets'];
-
+var ZF = '/12889 Zombeat.io – juego io zombie/video/001/';
+var AF = '/13292 Arrow Puzzle Tap Out Game/video/003 Tuz/';
+function zrow(res, mb, imp) {
+    return { file: 'V001_12889_Zombeat_' + res + '_30s.mp4', folder: ZF, thumb: 'thumb_V012_7448_CarCrash.png',
+        meta: 'MP4 · ' + res.replace('x', '×'), size: mb + ' MB · 30s', created: daysAgo(14), imported: daysAgo(0),
+        type: 'Video', num: 1, apps: ['Zombeat'], auto: '1C code', status: imp ? 'In catalog' : 'Ready' };
+}
 var ROWS = [
-    { file: '7448_carcrash_newyear_v13.mp4', folder: '/Creatives/CarCrash/2026/video/', thumb: 'thumb_V004NY_7448_CarCrash.png',
-      meta: 'H.264 · 1920×1080', size: '25.0 MB · 30s', created: daysAgo(1), imported: daysAgo(0),
-      type: 'Video', num: 13, apps: ['CarCrash'], auto: '1C code', author: '', status: 'Ready' },
-    { file: 'carcrash_new_concept_v3_final.mp4', folder: '/232342/christmas-2025/video/', thumb: 'thumb_V006_7448_CarCrash.png',
-      meta: 'H.264 · 1920×1080', size: '25.0 MB · 30s', created: daysAgo(3), imported: daysAgo(1),
-      type: 'Video', num: 3, apps: ['CarCrash'], auto: 'short name', author: '', status: 'Ready' },
-    { file: 'archeryking_banner_300x250_promo.png', folder: '/1029/q4-launch/banners/', thumb: 'thumb_B001EA_1029_ArcheryKing_300x250.png',
+    zrow('1920x1080', '47.3', true), zrow('1800x900', '46.7', true), zrow('1080x720', '32.5', true),
+    zrow('1080x1080', '41.5', true), zrow('1280x720', '26.6', false), zrow('1080x1920', '45.1', false), zrow('720x1280', '25.1', false),
+    { file: 'V003_13292_ArrowPuzzle_1920x1080_23s.mp4', folder: AF, thumb: 'thumb_V008_7448_CarCrash.png',
+      meta: 'MP4 · 1920×1080', size: '38.2 MB · 23s', created: daysAgo(0), imported: daysAgo(0),
+      type: 'Video', num: 3, apps: ['ArrowPuzzle'], auto: '1C code', status: 'Ready' },
+    { file: 'V003_13292_ArrowPuzzle_1080x1920_23s.mp4', folder: AF, thumb: 'thumb_V008_7448_CarCrash.png',
+      meta: 'MP4 · 1080×1920', size: '36.9 MB · 23s', created: daysAgo(0), imported: daysAgo(0),
+      type: 'Video', num: 3, apps: ['ArrowPuzzle'], auto: '1C code', status: 'Ready' },
+    { file: 'license_certificate_LDKJ9B3NA8.pdf', folder: AF, thumb: null,
+      meta: 'PDF · 1 page', size: '0.1 MB', created: daysAgo(0), imported: daysAgo(0),
+      type: 'Other', num: null, apps: [], auto: null, status: 'Not supported' },
+    { file: 'carcrash_new_concept_v3_final.mp4', folder: '/7448-4521 Car Crash Simulator/2026/video/', thumb: 'thumb_V006_7448_CarCrash.png',
+      meta: 'MP4 · 1920×1080', size: '25.0 MB · 30s', created: daysAgo(3), imported: daysAgo(1),
+      type: 'Video', num: 3, apps: ['CarCrash'], auto: 'short name', status: 'Ready' },
+    { file: 'archeryking_banner_300x250_promo.png', folder: '/1029 Archery King/q4-launch/banners/', thumb: 'thumb_B001EA_1029_ArcheryKing_300x250.png',
       meta: 'PNG · 300×250', size: '819.2 KB', created: daysAgo(4), imported: daysAgo(2),
-      type: 'Banner', num: null, apps: ['ArcheryKing'], auto: 'short name', author: '', status: 'Not ready' },
-    { file: 'blockbuild_tutorial_60s.mp4', folder: '/BlockBuild/tutorials/en/', thumb: null,
-      meta: 'H.265 · 1920×1080', size: '45.0 MB · 60s', created: daysAgo(5), imported: daysAgo(2),
-      type: 'Video', num: 2, apps: ['BlockBuild'], auto: 'short name', author: '', status: 'Ready' },
-    { file: 'bubblepop_fail_meme_15s.mp4', folder: '/UGC/memes/', thumb: null,
-      meta: 'H.264 · 1080×1920', size: '8.0 MB · 15s', created: daysAgo(6), imported: daysAgo(3),
-      type: 'Video', num: 5, apps: ['BubblePop'], auto: 'short name', author: '', status: 'Ready' },
-    { file: 'candyblast_holiday_banner_1200x628.jpg', folder: '/holidays/valentines/', thumb: 'thumb_B001NY_4215_CandyBlast_1020x500.png',
+      type: 'Banner', num: null, apps: ['ArcheryKing'], auto: 'short name', status: 'Not ready' },
+    { file: 'candyblast_holiday_banner_1200x628.jpg', folder: '/4215 Candy Blast/holidays/valentines/', thumb: 'thumb_B001NY_4215_CandyBlast_1020x500.png',
       meta: 'JPEG · 1200×628', size: '1.2 MB', created: daysAgo(8), imported: daysAgo(3),
-      type: 'Banner', num: 7, apps: ['CandyBlast'], auto: 'short name', author: '', status: 'Ready' },
-    { file: 'cookdash_gameplay_trailer_30s.mp4', folder: '/CookDash/gameplay/trailers/', thumb: null,
-      meta: 'H.264 · 1920×1080', size: '22.0 MB · 30s', created: daysAgo(9), imported: daysAgo(4),
-      type: 'Video', num: 1, apps: ['CookDash'], auto: 'short name', author: '', status: 'Ready' },
+      type: 'Banner', num: 7, apps: ['CandyBlast'], auto: 'short name', status: 'Ready' },
+    { file: 'bubblepop_fail_meme_15s.mp4', folder: '/7730 Bubble Pop Mania/UGC/memes/', thumb: null,
+      meta: 'MP4 · 1080×1920', size: '8.0 MB · 15s', created: daysAgo(6), imported: daysAgo(3),
+      type: 'Video', num: 5, apps: ['BubblePop'], auto: 'short name', status: 'Ready' },
     { file: 'carcrash_playable_html5_v2.zip', folder: '/Creatives/Playables/v2/', thumb: null,
       meta: 'HTML5 · 1080×1920', size: '6.0 MB', created: daysAgo(10), imported: daysAgo(4),
-      type: 'Playable', num: 2, apps: ['CarCrash'], auto: 'short name', author: '', status: 'Not supported' },
+      type: 'Playable', num: 2, apps: ['CarCrash'], auto: 'short name', status: 'Not supported' },
     { file: 'new_creative_final_FINAL2.mp4', folder: '/misc/drop/', thumb: null,
-      meta: 'H.264 · 1080×1920', size: '18.0 MB · 20s', created: daysAgo(12), imported: daysAgo(5),
-      type: 'Video', num: null, apps: [], auto: null, author: '', status: 'Not ready' },
-    { file: 'brand_guidelines_2026.pdf', folder: '/misc/drop/', thumb: null,
-      meta: 'PDF · 24 pages', size: '4.1 MB', created: daysAgo(12), imported: daysAgo(5),
-      type: 'Other', num: null, apps: [], auto: null, author: '', status: 'Not supported' },
+      meta: 'MP4 · 1080×1920', size: '18.0 MB · 20s', created: daysAgo(12), imported: daysAgo(5),
+      type: 'Video', num: null, apps: [], auto: null, status: 'Not ready' },
     { file: 'IMG_20260827_133702.heic', folder: '/misc/drop/', thumb: null,
       meta: 'HEIC · 4032×3024', size: '2.9 MB', created: daysAgo(12), imported: daysAgo(5),
-      type: 'Other', num: null, apps: [], auto: null, author: '', status: 'Not supported' }
+      type: 'Other', num: null, apps: [], auto: null, status: 'Not supported' }
 ];
 ROWS.forEach(function (r, i) { r.id = i; r.checked = false; });
 
-/* folder + version filter options (like on stage: versions narrow down when a folder is picked) */
 function rebuildFilterOptions() {
     var folderSel = document.getElementById('fFolder');
     var verSel = document.getElementById('fVersion');
+    var appSel = document.getElementById('fApp');
     var curFolder = folderSel.value;
-    var seen = {};
-    ROWS.forEach(function (r) {
-        if (seen[r.folder]) return;
-        seen[r.folder] = 1;
-        var o = document.createElement('option');
-        o.value = r.folder; o.textContent = r.folder;
-        folderSel.appendChild(o);
-    });
+    if (folderSel.options.length === 1) {
+        var seen = {};
+        ROWS.forEach(function (r) {
+            var top = '/' + r.folder.split('/')[1];
+            if (seen[top]) return; seen[top] = 1;
+            var o = document.createElement('option'); o.value = top; o.textContent = top; folderSel.appendChild(o);
+        });
+        Object.keys(APPS).forEach(function (k) {
+            var o = document.createElement('option'); o.value = k; o.textContent = APPS[k].code + ' · ' + APPS[k].name; appSel.appendChild(o);
+        });
+    }
     var curVer = verSel.value;
-    verSel.innerHTML = '<option value="">Any version</option>';
+    verSel.innerHTML = '<option value="">All</option>';
     var vseen = {};
     ROWS.forEach(function (r) {
-        if (curFolder && r.folder !== curFolder) return;
+        if (curFolder && '/' + r.folder.split('/')[1] !== curFolder) return;
         if (r.num == null || vseen[r.num]) return;
         vseen[r.num] = 1;
-        var o = document.createElement('option');
-        o.value = r.num; o.textContent = 'V' + r.num;
-        verSel.appendChild(o);
+        var o = document.createElement('option'); o.value = r.num; o.textContent = 'V' + r.num; verSel.appendChild(o);
     });
     verSel.value = vseen[curVer] ? curVer : '';
 }
 document.getElementById('fFolder').addEventListener('change', rebuildFilterOptions);
 rebuildFilterOptions();
 
-function statusClass(s) {
-    return s === 'Ready' ? 'st-ready' : s === 'In catalog' ? 'st-incatalog' : 'st-notready';
+function resetFilters() {
+    ['fFolder', 'fVersion', 'fType', 'fStatus', 'fSearch', 'fFrom', 'fApp'].forEach(function (id) { document.getElementById(id).value = ''; });
+    rebuildFilterOptions(); render();
 }
+
+function statusClass(s) { return s === 'Ready' ? 'st-ready' : s === 'In catalog' ? 'st-incatalog' : 'st-notready'; }
 
 function conceptNames(r) {
     var p = r.type === 'Video' ? 'V' : 'B';
-    return r.apps.map(function (a) {
-        return p + String(r.num).padStart(3, '0') + '_' + APPS[a].code + '_' + a + '_' + hash36(r.file + a, 6) + 'UA';
-    });
+    return r.apps.map(function (a) { return p + String(r.num).padStart(3, '0') + '_' + APPS[a].code + '_' + a; });
 }
 
 function render() {
@@ -172,67 +181,67 @@ function render() {
     var fType = document.getElementById('fType').value;
     var fFolder = document.getElementById('fFolder').value;
     var fStatus = document.getElementById('fStatus').value;
-    var fFrom = document.getElementById('fFrom').value ? new Date(document.getElementById('fFrom').value) : null;
-    var fTo = document.getElementById('fTo').value ? new Date(document.getElementById('fTo').value) : null;
-
     var fVersion = document.getElementById('fVersion').value;
+    var fApp = document.getElementById('fApp').value;
+    var fFrom = document.getElementById('fFrom').value ? new Date(document.getElementById('fFrom').value) : null;
 
     var html = '';
     ROWS.forEach(function (r) {
         if (q && r.file.toLowerCase().indexOf(q) < 0) return;
         if (fType && r.type !== fType) return;
-        if (fFolder && r.folder !== fFolder) return;
+        if (fFolder && '/' + r.folder.split('/')[1] !== fFolder) return;
         if (fStatus && r.status !== fStatus) return;
         if (fVersion && String(r.num) !== fVersion) return;
+        if (fApp && r.apps.indexOf(fApp) < 0) return;
         if (fFrom && r.imported < fFrom) return;
-        if (fTo && r.imported > fTo) return;
 
         var notSupported = r.status === 'Not supported';
         var addable = (r.type === 'Video' || r.type === 'Banner') && !notSupported;
         var inCat = r.status === 'In catalog';
+        var locked = inCat || notSupported;
         var thumb = r.thumb
             ? '<div class="thumb"><img src="thumbnails/' + r.thumb + '" loading="lazy" alt=""></div>'
             : '<div class="thumb thumb-empty">' + (r.type === 'Video' ? '&#9654;' : r.type === 'Playable' ? '&#9881;' : '&#9633;') + '</div>';
-        var appChips = r.apps.length
-            ? r.apps.map(function (a) {
-                return '<span class="chip chip-video" style="cursor:pointer" onclick="pickApps(' + r.id + ')">' + APPS[a].name + '</span>';
-              }).join('') + (r.auto ? ' <span class="auto-badge" title="Auto-assigned by ' + r.auto + ' in the filename (D27)">auto</span>' : '')
-            : (notSupported ? '<span class="dim">&mdash;</span>' : '<button class="btn btn-sm" onclick="pickApps(' + r.id + ')">Pick app</button>');
+        var appBox = r.apps.length
+            ? '<div class="tag-edit" style="min-width:280px;cursor:pointer" onclick="pickApps(' + r.id + ')">' + r.apps.map(function (a) {
+                return '<span class="chip tag">' + APPS[a].code + ' &middot; ' + esc(APPS[a].name) + ' &middot; ' + APPS[a].plat + '<span class="x">&times;</span></span>';
+              }).join('') + (r.auto ? '<span class="auto-badge" title="Auto-assigned by ' + r.auto + ' in the filename (D27)">auto</span>' : '') + '<span class="caret">&#9660;</span></div>'
+            : (notSupported ? '<span class="dim">&mdash;</span>' : '<div class="tag-edit" style="min-width:280px;cursor:pointer" onclick="pickApps(' + r.id + ')"><span class="add">Pick app&hellip;</span><span class="caret">&#9660;</span></div>');
         var typeOpts = ['Video', 'Banner', 'Playable', 'Other'].map(function (t) {
             return '<option' + (t === r.type ? ' selected' : '') + '>' + t + '</option>';
         }).join('');
-        var authorOpts = '<option value=""' + (r.author ? '' : ' selected') + '>&mdash;</option>' + AUTHORS.map(function (a) {
-            return '<option' + (a === r.author ? ' selected' : '') + '>' + a + '</option>';
-        }).join('');
         var action;
         if (inCat) {
-            action = '<button class="btn btn-sm" disabled>In catalog &#10003;</button>' +
-                '<button class="icon-btn" title="Remove from catalog — the file returns to Ready and can be reassigned to another app" onclick="removeFromCatalog(' + r.id + ')">&#8617;</button>';
+            action = '<button class="icon-btn" title="Re-sync file from Drive" onclick="toast(\'Prototype: file re-synced from Drive\')">&#10227;</button>' +
+                '<button class="btn btn-sm" disabled style="margin-left:6px">In catalog &#10003;</button>' +
+                '<button class="icon-btn" title="Remove from catalog — the file returns to Ready and can be reassigned" onclick="removeFromCatalog(' + r.id + ')">&#8617;</button>';
         } else if (!addable) {
-            action = '<button class="btn btn-green btn-sm" disabled title="' + (r.type === 'Playable' ? 'Playable — not supported yet (not in MVP 1)' : 'Not supported type — only video and images go to the catalog') + '">Add to catalog</button>';
+            action = '<button class="icon-btn" title="Re-sync file from Drive" onclick="toast(\'Prototype: file re-synced from Drive\')">&#10227;</button>' +
+                '<button class="btn btn-green btn-sm" disabled style="margin-left:6px" title="' + (r.type === 'Playable' ? 'Playable — not supported yet (not in MVP 1)' : 'Not supported type — only video and images go to the catalog') + '">Add to catalog</button>';
         } else {
-            action = '<button class="btn btn-green btn-sm" onclick="addToCatalog(' + r.id + ')">Add to catalog &rsaquo;</button>';
+            action = '<button class="icon-btn" title="Re-sync file from Drive" onclick="toast(\'Prototype: file re-synced from Drive\')">&#10227;</button>' +
+                '<button class="btn btn-green btn-sm" style="margin-left:6px" onclick="addToCatalog(' + r.id + ')">Add to catalog &rsaquo;</button>' +
+                '<button class="btn-link btn-sm" title="Open in catalog after adding" onclick="toast(\'Prototype: opens the concept in the catalog\')">&rarr;</button>';
         }
-
         var statusCell = notSupported
-            ? '<span class="chip chip-other" title="Unsupported file type (PDF, zip, HEIC…) — cannot be added to the catalog no matter what is filled in">Not supported</span>'
+            ? '<span class="chip chip-other" title="Unsupported file type (PDF, zip, HEIC…) — cannot be added to the catalog">Not supported</span>'
             : '<select class="status-sel ' + statusClass(r.status) + '" onchange="ROWS[' + r.id + '].status=this.value;render()"' + (inCat ? ' disabled' : '') + '>' +
                 ['Not ready', 'Ready', 'In catalog'].map(function (s) { return '<option' + (s === r.status ? ' selected' : '') + '>' + s + '</option>'; }).join('') +
               '</select>';
 
-        html += '<tr style="' + (inCat ? 'opacity:0.45' : '') + '">' +
+        html += '<tr>' +
             '<td><input type="checkbox" ' + (r.checked ? 'checked' : '') + ' onchange="ROWS[' + r.id + '].checked=this.checked;updateBatch()"></td>' +
-            '<td><div style="display:flex;gap:10px;align-items:center;min-width:230px">' + thumb +
-                '<div style="min-width:0"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:230px">' + esc(r.file) + '</div>' +
-                '<div class="dim mono small">' + esc(r.folder) + '</div></div></div></td>' +
-            '<td class="small muted">' + r.meta + '<br>' + r.size + '<br><span class="dim">Created ' + fmtDate(r.created) + '</span></td>' +
-            '<td class="muted small" style="white-space:nowrap">' + fmtDate(r.imported) + '</td>' +
-            '<td><select onchange="ROWS[' + r.id + '].type=this.value;render()"' + (inCat || notSupported ? ' disabled' : '') + '>' + typeOpts + '</select></td>' +
-            '<td><input type="number" min="1" value="' + (r.num || '') + '" placeholder="&mdash;" style="width:58px" onchange="ROWS[' + r.id + '].num=parseInt(this.value)||null"' + (inCat || notSupported ? ' disabled' : '') + '></td>' +
-            '<td>' + appChips + '</td>' +
-            '<td><select onchange="ROWS[' + r.id + '].author=this.value"' + (inCat || notSupported ? ' disabled' : '') + '>' + authorOpts + '</select></td>' +
+            '<td><div style="display:flex;gap:12px;align-items:center;min-width:250px">' + thumb +
+                '<div style="min-width:0"><div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:230px" title="' + esc(r.file) + '">' + esc(r.file) + '</div>' +
+                '<div class="path" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:230px;color:var(--muted)">' + esc(r.folder) + '</div></div></div></td>' +
+            '<td class="muted small" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px" title="' + esc(r.folder) + '">' + esc(r.folder.split('/')[1] || r.folder) + '</td>' +
+            '<td class="small muted" style="line-height:1.45">' + r.meta + '<br>' + r.size + '<br><span class="dim" style="font-style:italic">Created ' + fmtDate(r.created) + '</span></td>' +
+            '<td><select class="sel-plain" onchange="ROWS[' + r.id + '].type=this.value;render()"' + (locked ? ' disabled' : '') + '>' + typeOpts + '</select></td>' +
+            '<td>' + (locked ? '<span>' + (r.num ? 'V' + r.num : '&mdash;') + '</span>' : '<input class="in-plain" value="' + (r.num ? 'V' + r.num : '') + '" placeholder="&mdash;" onchange="ROWS[' + r.id + '].num=parseInt(this.value.replace(/\\D/g,\'\'))||null;render()">') + '</td>' +
             '<td>' + statusCell + '</td>' +
-            '<td style="white-space:nowrap">' + action + '</td>' +
+            '<td class="muted small" style="white-space:nowrap">' + fmtDate(r.imported) + '</td>' +
+            '<td>' + appBox + '</td>' +
+            '<td style="white-space:nowrap;text-align:right">' + action + '</td>' +
             '</tr>';
     });
     document.getElementById('rows').innerHTML = html || '<tr><td colspan="10"><div class="empty-state">No files match the filters.</div></td></tr>';
@@ -241,74 +250,40 @@ function render() {
 
 function addToCatalog(id) {
     var r = ROWS[id];
-    if (!r.apps.length || !r.num) {
-        toast('Pick an app and set the concept # first — the number comes from the filename or is set manually (D26)');
-        return;
-    }
-    r.status = 'In catalog';
-    r.checked = false;
+    if (!r.apps.length || !r.num) { toast('Pick an app and set the version first — the number comes from the filename or is set manually (D26)'); return; }
+    r.status = 'In catalog'; r.checked = false;
     var names = conceptNames(r);
     toast(names.length > 1
         ? 'Added as ' + names.length + ' concepts (one per app, same #, D26): ' + names.join(', ')
-        : 'Added to catalog as ' + names[0] + ' — full file goes to GCS, preview generated');
+        : 'Added to catalog as ' + names[0] + ' — the file gets its uid, full file goes to GCS, preview generated');
     render();
 }
-
-function removeFromCatalog(id) {
-    var r = ROWS[id];
-    r.status = 'Ready';
-    toast('Removed from catalog — the file is back to Ready; reassign the app and publish again if needed');
-    render();
-}
-
+function removeFromCatalog(id) { ROWS[id].status = 'Ready'; toast('Removed from catalog — the file is back to Ready; reassign the app and publish again if needed'); render(); }
 function batchAdd() {
     var ok = 0, skip = 0;
     ROWS.forEach(function (r) {
         if (!r.checked || r.status === 'In catalog') return;
         var addable = (r.type === 'Video' || r.type === 'Banner') && r.status !== 'Not supported' && r.apps.length && r.num;
-        if (addable) { r.status = 'In catalog'; r.checked = false; ok++; }
-        else skip++;
+        if (addable) { r.status = 'In catalog'; r.checked = false; ok++; } else skip++;
     });
-    toast('Batch: ' + ok + ' added to catalog' + (skip ? ', ' + skip + ' skipped (missing app / #, not supported type)' : ''));
+    toast('Batch: ' + ok + ' added to catalog' + (skip ? ', ' + skip + ' skipped (missing app / version, not supported type)' : ''));
     render();
 }
-
 function batchReady() {
     var n = 0;
-    ROWS.forEach(function (r) {
-        if (r.checked && r.status === 'Not ready') { r.status = 'Ready'; n++; }
-    });
-    toast(n + ' marked Ready');
-    render();
+    ROWS.forEach(function (r) { if (r.checked && r.status === 'Not ready') { r.status = 'Ready'; n++; } });
+    toast(n + ' marked Ready'); render();
 }
-
-function toggleAll(cb) {
-    ROWS.forEach(function (r) { r.checked = cb.checked; });
-    render();
-}
-
+function toggleAll(cb) { ROWS.forEach(function (r) { r.checked = cb.checked; }); render(); }
 function updateBatch() {
     var n = ROWS.filter(function (r) { return r.checked; }).length;
-    var bar = document.getElementById('batchBar');
-    bar.classList.toggle('show', n > 0);
+    document.getElementById('batchBar').classList.toggle('show', n > 0);
     document.getElementById('batchCount').textContent = n + ' selected';
 }
-
-function pickApps(id) {
-    toast('Prototype: multi-select app picker with 1C-code search; one file → several apps creates a concept per app with the same # (D26)');
-}
-
-function toggleDd(e) {
-    e.stopPropagation();
-    document.getElementById('driveDd').classList.toggle('show');
-}
-document.addEventListener('click', function () {
-    document.getElementById('driveDd').classList.remove('show');
-});
-
-function startImport(folder) {
-    toast('Import of ' + folder + ' started in the background — files and subfolders will appear here; re-import creates no duplicates');
-}
+function pickApps(id) { toast('Prototype: multi-select app picker with 1C-code search; one file → several apps creates a concept per app with the same # (D26)'); }
+function toggleDd(e) { e.stopPropagation(); document.getElementById('driveDd').classList.toggle('show'); }
+document.addEventListener('click', function () { document.getElementById('driveDd').classList.remove('show'); });
+function startImport(folder) { toast('Import of ' + folder + ' started in the background — files and subfolders will appear here; re-import creates no duplicates'); }
 
 render();
 </script>

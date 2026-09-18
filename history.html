@@ -16,86 +16,136 @@
 
 <main class="content">
     <div class="toolbar">
-        <div class="lead">What changed on Google Drive since the last sync: new files grouped by folder. Import right from an entry &mdash; only new files are pulled in, duplicates are skipped.</div>
+        <div class="lead">What changed on Google Drive since the last sync: added, changed and deleted items grouped by folder. Import right from an entry &mdash; only new files are pulled in, duplicates are skipped.</div>
         <div class="toolbar-actions">
             <span class="muted small">Last sync: today 06:00</span>
             <button class="btn btn-blue" onclick="toast('Prototype: sync started — Drive snapshot diff; the live version needs a Drive service account (History API)')">&#10227; Sync now</button>
         </div>
     </div>
 
-    <div class="mock-note">&#9888; Mock for discussion &mdash; entries are illustrative, not wired to real Drive folders yet. The live version requires Drive access tokens (History API).</div>
+    <div class="filter-card">
+        <div class="filter-grid" style="grid-template-columns: 360px 140px minmax(300px, 440px) 160px 1fr auto auto">
+            <div class="f-field"><label>Folder</label>
+                <select id="fFolder" onchange="render()"><option value="">All folders</option></select>
+            </div>
+            <div class="f-field"><label>Kind</label>
+                <select id="fKind" onchange="render()"><option value="">All</option><option>Added</option><option>Changed</option><option>Deleted</option></select>
+            </div>
+            <div class="f-field"><label>Search</label>
+                <span class="search-wrap"><input type="text" id="fSearch" placeholder="File or path&hellip;" oninput="render()"></span>
+            </div>
+            <div class="f-field"><label>Changed</label><input type="date" id="fDate" onchange="render()"></div>
+            <div></div>
+            <label class="f-inline">Include folders <span class="switch"><input type="checkbox" id="fFolders" onchange="render()"><span class="knob"></span></span></label>
+            <div class="f-field f-reset"><button class="btn" onclick="resetFilters()">Reset</button></div>
+        </div>
+    </div>
 
     <div class="panel" id="feed"></div>
 
-    <div class="foot-note">History is the base layer: Inbox imports are driven by it, and notifications (Slack / email / Asana tasks) will be sent on top of it later &middot; Import from an entry tops up only the new files &mdash; pressing any entry of the same folder never creates duplicates &middot; The Playables folder is scanned separately</div>
+    <div class="foot-note"><span style="color:var(--orange)">&#9888; Mock for discussion &mdash; entries are illustrative; the live version needs a Drive service account (History API) to see everyone's changes, not only your own.</span> History is the base layer: Inbox imports are driven by it, and notifications (Asana tasks, later Slack / email) are sent on top of it &middot; Import from an entry tops up only the new files &mdash; pressing any entry of the same folder never creates duplicates &middot; The Playables folder is scanned separately</div>
 </main>
 
 <script>
+function at(daysBack, h, m) { var d = daysAgo(daysBack); d.setHours(h, m, 0, 0); return d; }
 var FEED = [
-    { folder: '/Creatives/CarCrash/2026/video', app: 'Car Crash Simulator', code: '7448', date: daysAgo(0),
-      files: ['7448_carcrash_newyear_v14.mp4', '7448_carcrash_newyear_v14_vert.mp4'],
+    { folder: '/Creatives for Network/13292 Arrow Puzzle Tap Out Game/video/003 Tuz/', app: '13292 Arrow Puzzle Tap Out Game', code: '13292', date: at(0, 9, 53), kind: 'Added',
+      files: ['V003_13292_ArrowPuzzle_1920x1080_23s.mp4', 'V003_13292_ArrowPuzzle_1080x1920_23s.mp4', 'V003_13292_ArrowPuzzle_1800x900_23s.mp4', 'V003_13292_ArrowPuzzle_1080x1080_23s.mp4', 'V003_13292_ArrowPuzzle_1080x720_23s.mp4', 'license_certificate_LDKJ9B3NA8.pdf'],
       imported: false, seen: false },
-    { folder: '/Creatives/Sniper3D/concepts', app: 'Sniper Elite 3D', code: '6680', date: daysAgo(0),
-      files: ['6680_sniper_headshot_v10.mp4'],
+    { folder: '/Creatives for Network/13292 Arrow Puzzle Tap Out Game/video/001 Tuz/', app: '13292 Arrow Puzzle Tap Out Game', code: '13292', date: at(0, 9, 48), kind: 'Added',
+      files: ['V001_13292_ArrowPuzzle_1920x1080_23s.mp4', 'V001_13292_ArrowPuzzle_1800x900_23s.mp4', 'V001_13292_ArrowPuzzle_1080x720_23s.mp4', 'V001_13292_ArrowPuzzle_1080x1920_23s.mp4', 'V001_13292_ArrowPuzzle_1080x1080_23s.mp4', 'license_certificate_RWC2J9G8XD.pdf'],
       imported: false, seen: false },
-    { folder: '/holidays/valentines', app: 'Candy Blast', code: '4215', date: daysAgo(1),
+    { folder: '/Creatives for Network/13292 Arrow Puzzle Tap Out Game/video/002 Tuz/', app: '13292 Arrow Puzzle Tap Out Game', code: '13292', date: at(0, 9, 48), kind: 'Added',
+      files: ['V002_13292_ArrowPuzzle_1080x720_23s.mp4', 'V002_13292_ArrowPuzzle_1920x1080_23s.mp4', 'V002_13292_ArrowPuzzle_1800x900_23s.mp4', 'V002_13292_ArrowPuzzle_1080x1080_23s.mp4', 'V002_13292_ArrowPuzzle_1080x1920_23s.mp4', 'license_certificate_KXJY8GC9HV.pdf'],
+      imported: false, seen: false },
+    { folder: '/7448-4521 Car Crash Simulator/2026/video/', app: '7448 Car Crash Simulator', code: '7448', date: at(0, 8, 12), kind: 'Added',
+      files: ['V014NY_7448_CarCrash_1920x1080_30s.mp4', 'V014NY_7448_CarCrash_1080x1920_30s.mp4'],
+      imported: false, seen: false },
+    { folder: '/6680 Sniper Elite 3D/concepts/', app: '6680 Sniper Elite 3D', code: '6680', date: at(0, 7, 40), kind: 'Changed',
+      files: ['V010_6680_Sniper3D_1920x1080_30s.mp4'],
+      imported: false, seen: false },
+    { folder: '/4215 Candy Blast/holidays/valentines/', app: '4215 Candy Blast', code: '4215', date: at(1, 17, 5), kind: 'Added',
       files: ['candyblast_holiday_banner_1200x628.jpg'],
       imported: false, seen: false },
-    { folder: '/Creatives/MergeKingdom/ugc', app: 'Merge Kingdom', code: '8901', date: daysAgo(1),
+    { folder: '/8901 Merge Kingdom/ugc/', app: '8901 Merge Kingdom', code: '8901', date: at(1, 15, 22), kind: 'Added',
       files: ['mergekingdom_ugc_react_15s.mp4', 'mergekingdom_ugc_react_30s.mp4'],
       imported: false, seen: false },
-    { folder: '/Creatives/Playables/v2', app: 'Playables', code: null, date: daysAgo(2),
+    { folder: '/Creatives/Playables/v2/', app: 'Playables', code: null, date: at(2, 12, 30), kind: 'Added',
       files: ['carcrash_playable_html5_v2.zip'],
       imported: false, seen: false },
-    { folder: '/1029/q4-launch/banners', app: 'Archery King', code: '1029', date: daysAgo(3),
+    { folder: '/1029 Archery King/q4-launch/banners/', app: '1029 Archery King', code: '1029', date: at(3, 11, 2), kind: 'Added',
       files: ['archeryking_banner_300x250_promo.png', 'archeryking_banner_728x90.png'],
       imported: true, seen: true },
-    { folder: '/Creatives/TowerDef/video', app: 'Tower Defense Pro', code: '6523', date: daysAgo(3),
-      files: ['6523_towerdef_boss_wave_v13.mp4'],
+    { folder: '/6523 Tower Defense Pro/video/', app: '6523 Tower Defense Pro', code: '6523', date: at(3, 10, 15), kind: 'Deleted',
+      files: ['6523_towerdef_boss_wave_v12_old.mp4'],
       imported: true, seen: true },
-    { folder: '/Creatives/CarCrash/2026/video', app: 'Car Crash Simulator', code: '7448', date: daysAgo(5),
+    { folder: '/7448-4521 Car Crash Simulator/2026/video/', app: '7448 Car Crash Simulator', code: '7448', date: at(5, 16, 44), kind: 'Added',
       files: ['7448_carcrash_newyear_v13.mp4', 'carcrash_new_concept_v3_final.mp4', 'carcrash_ugc_variant_15s.mp4'],
       imported: true, seen: true },
-    { folder: '/BlockBuild/tutorials/en', app: 'Block Builder', code: '3056', date: daysAgo(6),
+    { folder: '/3056 Block Builder/tutorials/en/', app: '3056 Block Builder', code: '3056', date: at(6, 9, 30), kind: 'Added',
       files: ['blockbuild_tutorial_60s.mp4'],
       imported: true, seen: true },
-    { folder: '/Creatives/RacingFever/drift', app: 'Racing Fever', code: '1133', date: daysAgo(6),
+    { folder: '/1133 Racing Fever/drift/', app: '1133 Racing Fever', code: '1133', date: at(6, 9, 5), kind: 'Added',
       files: ['1133_racing_drift_v5.mp4', '1133_racing_drift_v5_vert.mp4', '1133_racing_banner_1020x500.png'],
       imported: true, seen: true },
-    { folder: '/UGC/memes', app: 'Bubble Pop Mania', code: '7730', date: daysAgo(8),
+    { folder: '/7730 Bubble Pop Mania/UGC/memes/', app: '7730 Bubble Pop Mania', code: '7730', date: at(8, 14, 0), kind: 'Added',
       files: ['bubblepop_fail_meme_15s.mp4'],
       imported: true, seen: true },
-    { folder: '/Creatives/ZombieSurv/halloween', app: 'Zombie Survival', code: '3310', date: daysAgo(9),
+    { folder: '/3310 Zombie Survival/halloween/', app: '3310 Zombie Survival', code: '3310', date: at(9, 13, 20), kind: 'Added',
       files: ['3310_zombie_halloween_v12.mp4', '3310_zombie_halloween_banner_300x250.png'],
       imported: true, seen: true },
-    { folder: '/CookDash/gameplay/trailers', app: 'Cooking Dash', code: '5591', date: daysAgo(11),
+    { folder: '/5591 Cooking Dash/gameplay/trailers/', app: '5591 Cooking Dash', code: '5591', date: at(11, 10, 10), kind: 'Added',
       files: ['cookdash_gameplay_trailer_30s.mp4'],
       imported: true, seen: true },
-    { folder: '/Creatives/WordPuzzle', app: 'Word Puzzle Master', code: '2204', date: daysAgo(14),
+    { folder: '/2204 Word Puzzle Master/', app: '2204 Word Puzzle Master', code: '2204', date: at(14, 18, 45), kind: 'Added',
       files: ['2204_wordpuzzle_daily_challenge_v2.mp4'],
       imported: true, seen: true }
 ];
 
+(function () {
+    var sel = document.getElementById('fFolder'), seen = {};
+    FEED.forEach(function (e) {
+        var top = e.folder.split('/')[1];
+        if (seen[top]) return; seen[top] = 1;
+        var o = document.createElement('option'); o.value = top; o.textContent = '/' + top; sel.appendChild(o);
+    });
+})();
+
+function resetFilters() {
+    ['fFolder', 'fKind', 'fSearch', 'fDate'].forEach(function (id) { document.getElementById(id).value = ''; });
+    document.getElementById('fFolders').checked = false;
+    render();
+}
+
+function fmtTime(d) {
+    var h = d.getHours(), m = d.getMinutes(), ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ' ' + ap;
+}
 function dayLabel(d) {
-    var diff = Math.round((TODAY - d) / 86400000);
-    if (diff === 0) return '<span class="hd-today">Today</span> · ' + fmtDate(d);
-    if (diff === 1) return 'Yesterday · ' + fmtDate(d);
-    return fmtDate(d);
+    var diff = Math.round((TODAY - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
+    var lbl = diff === 0 ? '<span class="hd-today">Today</span>' : diff === 1 ? 'Yesterday' : '';
+    return lbl + (lbl ? ' &nbsp; ' : '') + fmtDate(d);
 }
 
 function render() {
-    var order = FEED.map(function (e, i) { return i; }).sort(function (a, b) {
-        return FEED[b].date - FEED[a].date;
-    });
-    /* группировка по дням: заголовок с датой и итогом за день */
+    var fFolder = document.getElementById('fFolder').value;
+    var fKind = document.getElementById('fKind').value;
+    var q = document.getElementById('fSearch').value.trim().toLowerCase();
+    var fDate = document.getElementById('fDate').value;
+    var order = FEED.map(function (e, i) { return i; }).filter(function (i) {
+        var e = FEED[i];
+        if (fFolder && e.folder.split('/')[1] !== fFolder) return false;
+        if (fKind && e.kind !== fKind) return false;
+        if (q && (e.folder + ' ' + e.files.join(' ')).toLowerCase().indexOf(q) < 0) return false;
+        if (fDate && e.date.toDateString() !== new Date(fDate).toDateString()) return false;
+        return true;
+    }).sort(function (a, b) { return FEED[b].date - FEED[a].date; });
+
     var byDay = [];
     order.forEach(function (i) {
         var key = FEED[i].date.toDateString();
         var last = byDay[byDay.length - 1];
-        if (!last || last.key !== key) {
-            last = { key: key, date: FEED[i].date, items: [] };
-            byDay.push(last);
-        }
+        if (!last || last.key !== key) { last = { key: key, date: FEED[i].date, items: [] }; byDay.push(last); }
         last.items.push(i);
     });
 
@@ -106,44 +156,44 @@ function render() {
         day.items.forEach(function (i) { folders[FEED[i].folder] = 1; });
         var nf = Object.keys(folders).length;
         html += '<div class="hist-date">' + dayLabel(day.date) +
-            '<span class="hd-count">' + files + ' file' + (files > 1 ? 's' : '') +
-            ' in ' + nf + ' folder' + (nf > 1 ? 's' : '') + '</span></div>';
+            '<span class="hd-count">' + files + ' file' + (files > 1 ? 's' : '') + ' in ' + nf + ' folder' + (nf > 1 ? 's' : '') + '</span></div>';
         day.items.forEach(function (i) { html += entryHtml(i); });
     });
-    document.getElementById('feed').innerHTML = html;
+    document.getElementById('feed').innerHTML = html || '<div class="empty-state">No changes match the filters.</div>';
 }
 
 function entryHtml(i) {
     var e = FEED[i];
     var n = e.files.length;
-    var importBtn = e.imported
-        ? '<span class="small" style="color:var(--green-pill);white-space:nowrap">Imported &#10003;</span> ' +
+    var verb = e.kind === 'Deleted' ? 'deleted' : 'added/changed';
+    var importBtn = e.kind === 'Deleted' ? ''
+        : e.imported
+        ? '<span class="small" style="color:var(--green);white-space:nowrap">Imported &#10003;</span>' +
           '<button class="btn btn-sm" onclick="doImport(' + i + ')" title="Re-import tops up only new files, duplicates are skipped">Import again</button>'
         : '<button class="btn btn-green btn-sm" onclick="doImport(' + i + ')">Import &rsaquo;</button>';
     return '<div class="alert-item">' +
         '<span class="alert-dot' + (e.seen ? ' seen' : '') + '"></span>' +
         '<div class="alert-body">' +
-            '<div><strong>' + e.app + '</strong>' + (e.code ? ' <span class="dim mono small">' + e.code + '</span>' : '') +
-            ' <span class="muted">&mdash; ' + n + ' new file' + (n > 1 ? 's' : '') + '</span></div>' +
-            '<div class="alert-files"><span class="dim">' + esc(e.folder) + '/</span> &middot; ' + e.files.join(' · ') + '</div>' +
+            '<div><strong>' + esc(e.app) + '</strong> <span class="muted">&mdash; ' + n + ' ' + verb + ' at ' + fmtTime(e.date) + '</span></div>' +
+            '<div class="path">' + esc(e.folder) + '</div>' +
+            '<ul class="file-list">' + e.files.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' +
         '</div>' +
-        importBtn +
-        '<button class="btn btn-sm" onclick="toast(\'Prototype: notification on top of history — an Asana task for the UA manager (later also Slack / email)\')">Notify &rsaquo; Asana</button>' +
-        (e.seen ? '<span class="dim small">seen</span>' : '<button class="btn-link btn-sm" onclick="markSeen(' + i + ')">Mark seen</button>') +
+        '<div class="alert-actions">' + importBtn +
+            '<button class="btn btn-sm" onclick="toast(\'Prototype: notification on top of history — an Asana task for the UA manager (later also Slack / email)\')">Notify &rsaquo; Asana</button>' +
+            (e.seen ? '<span class="dim small">seen</span>' : '<button class="btn-link btn-sm" onclick="markSeen(' + i + ')">Mark seen</button>') +
+        '</div>' +
         '</div>';
 }
 
 function doImport(i) {
     var e = FEED[i];
     var wasImported = e.imported;
-    e.imported = true;
-    e.seen = true;
+    e.imported = true; e.seen = true;
     toast(wasImported
         ? 'Import of ' + e.folder + ': everything is already in the Inbox — 0 new files, ' + e.files.length + ' duplicates skipped'
         : e.files.length + ' new file' + (e.files.length > 1 ? 's' : '') + ' from ' + e.folder + ' queued for import — check the Inbox; duplicates are skipped automatically');
     render();
 }
-
 function markSeen(i) { FEED[i].seen = true; render(); }
 
 render();
