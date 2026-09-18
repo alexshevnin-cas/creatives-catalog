@@ -7,7 +7,7 @@
 <link rel="icon" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -16,12 +16,14 @@
 
 <main class="content">
     <div class="toolbar">
-        <div class="lead">Browse and manage every creative across all apps. Naming, sizes and previews are assigned by the system.</div>
+        <div class="lead">Browse and manage every creative across apps (video and banner). Names, file uids, sizes and previews are assigned by the system; performance comes back per network.</div>
         <div class="toolbar-actions">
             <button class="btn btn-icon" title="Export filtered set back to Drive (renamed, new folder)" onclick="toast('Prototype: filtered set would be exported back to Google Drive into a new folder, renamed by convention')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M6 11l6 6 6-6"/><path d="M4 21h16"/></svg></button>
             <a class="btn btn-green" href="inbox.html" title="Files enter the catalog through the Inbox (Drive import)">+ Add</a>
         </div>
     </div>
+
+    <div class="mock-note">&#9888; Performance figures are a mock for discussion. Live source: <strong>ua_sync</strong> at concept &times; network level (Google Ads today, Meta loading); file-level stats appear only for files published from the catalog with their uid (D31, D34).</div>
 
     <div class="filter-card">
         <div class="filter-grid">
@@ -43,15 +45,37 @@
                     <option value="mislead">mislead</option>
                     <option value="seasonal">seasonal</option>
                     <option value="meme">meme</option>
+                    <option value="NewYear">NewYear</option>
+                    <option value="Halloween">Halloween</option>
                 </select>
             </div>
-            <div class="f-field"><label>Author</label>
-                <select id="fAuthor" onchange="render()"><option value="">Any author</option></select>
+            <div class="f-field"><label>Authors</label>
+                <select id="fAuthor" onchange="render()"><option value="">Any authors</option></select>
+            </div>
+            <div class="f-field"><label>Performance</label>
+                <select id="fPerf" onchange="render()">
+                    <option value="">Any</option>
+                    <option value="top">Top performer</option>
+                    <option value="ok">Performing</option>
+                    <option value="low">Underperforming</option>
+                    <option value="few">Few data</option>
+                    <option value="none">No data</option>
+                </select>
+            </div>
+            <div class="f-field"><label>Published in</label>
+                <select id="fNet" onchange="render()">
+                    <option value="">Any network</option>
+                    <option value="Google Ads">Google Ads</option>
+                    <option value="Mintegral">Mintegral</option>
+                    <option value="TikTok">TikTok</option>
+                    <option value="Meta">Meta</option>
+                    <option value="__none">Not published</option>
+                </select>
             </div>
             <div class="f-field"><label>From</label><input type="date" id="fFrom" onchange="render()"></div>
             <div class="f-field"><label>To</label><input type="date" id="fTo" onchange="render()"></div>
             <div class="f-field f-wide"><label>Search</label>
-                <span class="search-wrap"><input type="text" id="fSearch" placeholder="1C code, concept # or name" oninput="render()"></span>
+                <span class="search-wrap"><input type="text" id="fSearch" placeholder="Concept, file uid, 1C code or filename" oninput="render()"></span>
             </div>
         </div>
         <div class="filter-foot">
@@ -61,32 +85,94 @@
     </div>
 
     <div class="panel panel-scroll" id="catalog"></div>
-    <div class="foot-note">Statuses live in the Inbox only (D29) &middot; Network badges are placeholders until the Networks phase &middot; Playables are visible in the Inbox but not in the catalog (D18)</div>
+    <div class="foot-note">Every <strong>file</strong> carries its own uid, the concept name has no hash (D31) &middot; Tags live in the dictionary, not in filenames (D32) &middot; Legacy names in networks are left as they are &mdash; no file-level stats for them (D33) &middot; Stats are shown per concept &times; network; deep analysis lives in the Creative Dashboard (Superset) (D34) &middot; Analytics reads uid &rarr; app, concept, resolution, duration, author, tags through the dictionary (D35) &middot; Playables are visible in the Inbox but not in the catalog (D18)</div>
 </main>
 
 <script>
 var DATA = null;
-var NETS = ['Google', 'Mintegral', 'TikTok', 'Meta'];
+var NETS = ['Google Ads', 'Mintegral', 'TikTok', 'Meta'];
+var NET_MAP = { Google: 'Google Ads', 'Google Ads': 'Google Ads', Mintegral: 'Mintegral', TikTok: 'TikTok', Meta: 'Meta', Facebook: 'Meta' };
+var NET_SRC = {
+    'Google Ads': { src: 'ua_sync · google_ads_raw', has: true },
+    'Mintegral':  { src: 'network API · 30-day window', has: true },
+    'TikTok':     { src: 'Tenjin', has: true },
+    'Meta':       { src: 'loading into ua_sync', has: false }
+};
 var AUTHORS = ['M. Petrov', 'K. Bondar', 'D. Ivanenko', 'O. Marchenko', 'S. Kravets'];
-var TAG_POOL = ['gameplay', 'UGC', null, 'meme', 'gameplay', 'mislead', null, 'UGC'];
+var TAG_POOL = ['gameplay', 'UGC', null, 'meme', 'gameplay', 'mislead', null, 'UGC', 'NewYear', null, 'Halloween'];
+var PERF = {
+    top:  { cls: 'perf-top',  label: 'Top performer' },
+    ok:   { cls: 'perf-ok',   label: 'Performing' },
+    low:  { cls: 'perf-low',  label: 'Underperforming' },
+    few:  { cls: 'perf-few',  label: 'Few data' },
+    none: { cls: 'perf-none', label: 'No data' }
+};
 var expanded = {};   /* gameKey -> true, gameKey|Type -> true */
+var openSub = {};    /* 'rr-<id>' / 'nr-<id>' -> true */
 
 fetch('data.json').then(function (r) { return r.json(); }).then(function (d) {
     DATA = d;
-    /* enrich deterministically: uid, tags, author, added date */
     d.tree.forEach(function (g) {
         g.types = g.types.filter(function (t) { return t.type !== 'Playable'; });
         var gOff = parseInt(hash36(g.short_name, 2), 36) % 14;
+        var targetCpi = 0.6 + rnd01('cpi' + g.short_name) * 1.4;   /* KPI CPI per app (mock) */
         g.types.forEach(function (t) {
             var maxSeq = t.concepts.reduce(function (m, c) { return Math.max(m, c.seq_number); }, 0);
             t.concepts.forEach(function (c) {
-                c.uid = hash36(c.concept_name, 6) + 'UA';
                 c.author = AUTHORS[(c.id * 7 + c.seq_number) % AUTHORS.length];
                 c.tags = [];
                 if (c.seasonal_tag && c.seasonal_tag !== 'STD') c.tags.push('seasonal');
                 var extra = TAG_POOL[c.id % TAG_POOL.length];
                 if (extra && c.tags.indexOf(extra) < 0) c.tags.push(extra);
                 c.added = daysAgo(gOff + (maxSeq - c.seq_number) * 23);
+                c.lifetime = Math.round((TODAY - c.added) / 86400000);
+
+                /* every file gets its own uid (D31) */
+                c.renditions.forEach(function (r) {
+                    r.uid = hash36(c.concept_name + '|' + r.generated_name, 6);
+                    r.size = r.file_size_mb && r.file_size_mb > 0 ? r.file_size_mb : (t.type === 'Video' ? 8 + rnd01(r.uid) * 40 : 0.2 + rnd01(r.uid) * 1.6);
+                });
+
+                /* where it is published (mock): from data.json networks; every 3rd concept was published from the catalog (with uid) */
+                c.pubNets = [];
+                (c.networks || []).forEach(function (n) {
+                    var m = NET_MAP[n]; if (m && c.pubNets.indexOf(m) < 0) c.pubNets.push(m);
+                });
+                c.pubMode = !c.pubNets.length ? 'none' : (c.id % 3 === 0 ? 'catalog' : 'legacy');
+
+                /* concept × network stats (mock, deterministic) */
+                c.stats = {};
+                var tSpend = 0, tInst = 0, tImpr = 0;
+                c.pubNets.forEach(function (n) {
+                    if (!NET_SRC[n].has) { c.stats[n] = null; return; }
+                    var b = rnd01(c.concept_name + n);
+                    var spend = 15 + b * 2200 * (0.4 + rnd01(g.short_name) * 1.2);
+                    var impr = spend * (700 + rnd01(c.concept_name + n + 'i') * 900);
+                    var clicks = impr * (0.006 + rnd01(c.concept_name + n + 'c') * 0.022);
+                    var inst = clicks * (0.07 + rnd01(c.concept_name + n + 'k') * 0.25);
+                    c.stats[n] = { spend: spend, impr: impr, clicks: clicks, inst: inst };
+                    tSpend += spend; tInst += inst; tImpr += impr;
+                });
+                c.tot = { spend: tSpend, inst: tInst, impr: tImpr };
+                if (!c.pubNets.length || !tSpend) c.perf = 'none';
+                else if (tInst < 30 || tSpend < 25) c.perf = 'few';
+                else {
+                    var ratio = targetCpi / (tSpend / tInst);
+                    c.perf = ratio > 1.25 ? 'top' : ratio < 0.8 ? 'low' : 'ok';
+                }
+
+                /* file-level stats only when published from the catalog with uid (D34) */
+                if (c.pubMode === 'catalog') {
+                    var net = c.pubNets.filter(function (n) { return c.stats[n]; })[0];
+                    var pubFiles = c.renditions.filter(function (r) { return rnd01('pf' + r.uid) > 0.3; });
+                    if (net && pubFiles.length) {
+                        var w = pubFiles.map(function (r) { return 0.3 + rnd01('w' + r.uid); });
+                        var ws = w.reduce(function (a, b) { return a + b; }, 0);
+                        pubFiles.forEach(function (r, i) {
+                            r.stat = { net: net, spend: c.stats[net].spend * w[i] / ws, inst: c.stats[net].inst * w[i] / ws, impr: c.stats[net].impr * w[i] / ws };
+                        });
+                    }
+                }
             });
         });
     });
@@ -104,7 +190,6 @@ fetch('data.json').then(function (r) { return r.json(); }).then(function (d) {
         o.value = a; o.textContent = a;
         selAuthor.appendChild(o);
     });
-    /* first game open by default */
     if (d.tree.length) {
         expanded[d.tree[0].short_name] = true;
         if (d.tree[0].types.length) expanded[d.tree[0].short_name + '|' + d.tree[0].types[0].type] = true;
@@ -113,22 +198,90 @@ fetch('data.json').then(function (r) { return r.json(); }).then(function (d) {
 });
 
 function filtersActive() {
-    return document.getElementById('fApp').value || document.getElementById('fType').value ||
-        document.getElementById('fTag').value || document.getElementById('fAuthor').value ||
-        document.getElementById('fFrom').value || document.getElementById('fTo').value ||
-        document.getElementById('fSearch').value;
+    return ['fApp', 'fType', 'fTag', 'fAuthor', 'fPerf', 'fNet', 'fFrom', 'fTo', 'fSearch'].some(function (id) {
+        return document.getElementById(id).value;
+    });
 }
 
 function resetFilters() {
-    ['fApp', 'fType', 'fTag', 'fAuthor', 'fFrom', 'fTo', 'fSearch'].forEach(function (id) {
+    ['fApp', 'fType', 'fTag', 'fAuthor', 'fPerf', 'fNet', 'fFrom', 'fTo', 'fSearch'].forEach(function (id) {
         document.getElementById(id).value = '';
     });
     render();
 }
 
 function setTag(tag) {
+    event.stopPropagation();
     document.getElementById('fTag').value = tag;
     render();
+}
+
+function perfCell(c) {
+    var p = PERF[c.perf];
+    var sum = c.tot.spend
+        ? '<div class="small muted">' + fmtMoney(c.tot.spend) + ' &middot; ' + fmtNum(c.tot.inst) + ' inst. &middot; CPI $' + (c.tot.spend / Math.max(c.tot.inst, 1)).toFixed(2) + '</div>'
+        : '<div class="small dim">' + (c.pubNets.length ? 'no metrics yet' : 'not published') + '</div>';
+    var link = c.pubNets.length
+        ? '<a class="ext-link" href="#" onclick="event.preventDefault();event.stopPropagation();toast(\'Prototype: opens the Creative Dashboard in Superset filtered by ' + esc(c.concept_name) + '\')">Superset &#8599;</a>'
+        : '';
+    return '<span class="perf ' + p.cls + '">' + p.label + '</span>' + sum + link;
+}
+
+function netCell(c) {
+    var pills = NETS.map(function (n) {
+        var on = c.pubNets.indexOf(n) >= 0;
+        if (!on) return '<span class="net-pill off" title="Not published in ' + n + '">' + n + '</span>';
+        var cls = c.pubMode === 'catalog' ? '' : ' legacy';
+        var tip = c.pubMode === 'catalog' ? 'Published from the catalog — file uids are in the network' : 'Published before the catalog under a legacy name (D33)';
+        return '<span class="net-pill' + cls + '" title="' + tip + '">' + n + '</span>';
+    }).join('');
+    return pills + '<div><span class="stats-toggle" onclick="toggleSub(event, \'nr-' + c.id + '\', this)">Stats by network <span class="chev' + (openSub['nr-' + c.id] ? ' open' : '') + '">&#9654;</span></span></div>';
+}
+
+function filesRow(c, t) {
+    var h = '<tr class="rend-row" id="rr-' + c.id + '"' + (openSub['rr-' + c.id] ? '' : ' style="display:none"') + '><td colspan="9"><div class="rend-list">';
+    c.renditions.forEach(function (r) {
+        var info = [];
+        if (r.width && r.height) info.push(r.width + '&times;' + r.height);
+        if (r.duration_sec) info.push(r.duration_sec + 's');
+        info.push(r.size.toFixed(1) + ' MB');
+        var ext = t.type === 'Video' ? '.mp4' : '.png';
+        var name = r.generated_name + '_<span class="uid">' + r.uid + '</span>';
+        var stat;
+        if (r.stat) stat = '<span class="rend-stat"><strong>' + r.stat.net + '</strong> &middot; ' + fmtMoney(r.stat.spend) + ' &middot; ' + fmtNum(r.stat.inst) + ' inst. &middot; IPM ' + (r.stat.inst / r.stat.impr * 1000).toFixed(1) + '</span>';
+        else if (c.pubMode === 'catalog') stat = '<span class="rend-stat dim">not published</span>';
+        else if (c.pubMode === 'legacy') stat = '<span class="rend-stat dim" title="Published before the catalog under a legacy name — cannot be matched by uid (D33)">no file-level stats &middot; legacy name in network</span>';
+        else stat = '<span class="rend-stat dim">not published</span>';
+        h += '<div class="rend-item"><span class="mono">' + name + ext + '</span>' +
+            '<span class="dim small">' + info.join(' &middot; ') + '</span>' +
+            stat +
+            '<span style="flex:1"></span>' +
+            '<button class="btn-link btn-sm" onclick="event.stopPropagation();toast(\'uid ' + r.uid + ' copied — analytics resolves it to app, concept, resolution, duration, author and tags (D35)\')">Copy uid</button>' +
+            '<button class="btn-link btn-sm" onclick="event.stopPropagation();toast(\'Prototype: downloads as ' + r.generated_name + '_' + r.uid + ext + '\')">Download</button></div>';
+    });
+    return h + '</div></td></tr>';
+}
+
+function netsRow(c) {
+    var h = '<tr class="net-row" id="nr-' + c.id + '"' + (openSub['nr-' + c.id] ? '' : ' style="display:none"') + '><td colspan="9"><div class="rend-list">' +
+        '<table class="net-table"><thead><tr><th>Network</th><th>Status</th><th class="num">Spend</th><th class="num">Impr.</th><th class="num">Clicks</th><th class="num">Installs</th><th class="num">IPM</th><th class="num">CPI</th><th>Source</th><th></th></tr></thead><tbody>';
+    NETS.forEach(function (n) {
+        var on = c.pubNets.indexOf(n) >= 0;
+        var s = on ? c.stats[n] : null;
+        var status = !on ? '<span class="dim">&mdash;</span>'
+            : c.pubMode === 'catalog' ? '<span class="net-pill">Published</span> <span class="small dim">from catalog</span>'
+            : '<span class="net-pill legacy">Published</span> <span class="small dim">legacy name</span>';
+        var nums = s
+            ? '<td class="num">' + fmtMoney(s.spend) + '</td><td class="num">' + fmtNum(s.impr) + '</td><td class="num">' + fmtNum(s.clicks) + '</td><td class="num">' + fmtNum(s.inst) + '</td><td class="num">' + (s.inst / s.impr * 1000).toFixed(1) + '</td><td class="num">$' + (s.spend / Math.max(s.inst, 1)).toFixed(2) + '</td>'
+            : '<td class="num dim">&mdash;</td><td class="num dim">&mdash;</td><td class="num dim">&mdash;</td><td class="num dim">&mdash;</td><td class="num dim">&mdash;</td><td class="num dim">&mdash;</td>';
+        var src = on ? '<span class="net-src">' + NET_SRC[n].src + '</span>' : '';
+        var act = on
+            ? '<button class="btn-link btn-sm" onclick="event.stopPropagation();toast(\'Prototype: opens ' + n + ' library for this concept\')">Open</button><button class="btn-link btn-sm danger" onclick="event.stopPropagation();toast(\'Prototype: removes the concept files from the ' + n + ' library (Networks phase)\')">Remove</button>'
+            : '<button class="btn-link btn-sm" onclick="event.stopPropagation();toast(\'Prototype: uploads the concept files to the ' + n + ' Creative Library with their uids (Networks phase, Phase 3)\')">Upload to Library</button>';
+        h += '<tr><td><strong>' + n + '</strong></td><td>' + status + '</td>' + nums + '<td>' + src + '</td><td style="text-align:right;white-space:nowrap">' + act + '</td></tr>';
+    });
+    h += '<tr><td colspan="10" class="dim small">+ Unity, AppLovin, YSO, ironSource, Bigo &hellip; &mdash; up to 14 networks in the dashboards; the list is not final, cross-promo counts as a network. Not every network accepts every format (Google Ads takes ~3 resolutions).</td></tr>';
+    return h + '</tbody></table></div></td></tr>';
 }
 
 function render() {
@@ -137,21 +290,22 @@ function render() {
     var fType = document.getElementById('fType').value;
     var fTag = document.getElementById('fTag').value;
     var fAuthor = document.getElementById('fAuthor').value;
+    var fPerf = document.getElementById('fPerf').value;
+    var fNet = document.getElementById('fNet').value;
     var fFrom = document.getElementById('fFrom').value ? new Date(document.getElementById('fFrom').value) : null;
     var fTo = document.getElementById('fTo').value ? new Date(document.getElementById('fTo').value) : null;
     var q = document.getElementById('fSearch').value.trim().toLowerCase();
     var autoOpen = filtersActive();
 
     var html = '<table class="tbl"><thead><tr>' +
-        '<th style="width:52px">#</th><th style="width:150px">Tags</th><th style="width:76px">Preview</th>' +
-        '<th>Concept</th><th style="width:90px">Files</th><th style="width:120px">Author</th>' +
-        '<th style="width:210px">Networks <span style="text-transform:none;letter-spacing:0">&middot; phase 3</span></th>' +
+        '<th style="width:52px">#</th><th style="width:150px">Author</th><th style="width:230px">Tags</th><th style="width:78px">Preview</th>' +
+        '<th>Concept</th><th style="width:96px">Files</th><th style="width:200px">Performance</th>' +
+        '<th style="width:250px">Networks</th><th style="width:70px"></th>' +
         '</tr></thead><tbody>';
     var anyGame = false;
 
     DATA.tree.forEach(function (g) {
         if (fApp && g.short_name !== fApp) return;
-
         var gameBody = '';
         var total = 0;
 
@@ -160,10 +314,14 @@ function render() {
             var concepts = t.concepts.filter(function (c) {
                 if (fTag && c.tags.indexOf(fTag) < 0) return false;
                 if (fAuthor && c.author !== fAuthor) return false;
+                if (fPerf && c.perf !== fPerf) return false;
+                if (fNet === '__none' && c.pubNets.length) return false;
+                if (fNet && fNet !== '__none' && c.pubNets.indexOf(fNet) < 0) return false;
                 if (fFrom && c.added < fFrom) return false;
                 if (fTo && c.added > fTo) return false;
                 if (q) {
-                    var hay = (c.concept_name + ' ' + c.uid + ' ' + g.code_1c + ' ' + c.seq_number).toLowerCase();
+                    var hay = (c.concept_name + ' ' + g.code_1c + ' ' + c.seq_number + ' ' +
+                        c.renditions.map(function (r) { return r.generated_name + ' ' + r.uid; }).join(' ')).toLowerCase();
                     if (hay.indexOf(q) < 0) return false;
                 }
                 return true;
@@ -174,50 +332,34 @@ function render() {
             var tKey = g.short_name + '|' + t.type;
             var tOpen = autoOpen || expanded[tKey];
             gameBody += '<tr class="type-head" onclick="toggleKey(\'' + tKey + '\')">' +
-                '<td colspan="7"><span class="chev' + (tOpen ? ' open' : '') + '">&#9654;</span>' +
+                '<td colspan="9"><span class="chev' + (tOpen ? ' open' : '') + '">&#9654;</span>' +
                 '<span class="chip chip-' + t.type.toLowerCase() + '">' + t.type + '</span>' +
                 ' <span class="dim">[' + concepts.length + ']</span></td></tr>';
             if (!tOpen) return;
 
             concepts.forEach(function (c) {
-                var fullName = c.concept_name + '_' + c.uid;
                 var fr = c.renditions[0];
                 var thumb = fr && fr.thumbnail_path
                     ? '<div class="thumb"><img src="thumbnails/' + fr.thumbnail_path + '" loading="lazy" alt=""></div>'
                     : '<div class="thumb thumb-empty">' + t.type[0] + '</div>';
-                var tags = c.tags.map(function (tg) {
-                    return '<span class="chip tag tag-' + tg + '" onclick="setTag(\'' + tg + '\')">' + tg + '</span>';
-                }).join('') || '<span class="dim">&mdash;</span>';
-                var nets = NETS.map(function (n) {
-                    return '<span class="net-stub" title="Networks phase (Phase 3) — not in MVP 1">' + n + '</span>';
-                }).join('');
+                var tags = '<div class="tag-edit">' + c.tags.map(function (tg) {
+                    return '<span class="chip tag tag-' + tg + '" onclick="setTag(\'' + tg + '\')">' + tg + '<span class="x" title="Remove tag" onclick="event.stopPropagation();toast(\'Prototype: tag ' + tg + ' removed from the dictionary entry\')">&times;</span></span>';
+                }).join('') + '<span class="add" onclick="event.stopPropagation();toast(\'Prototype: tags go to the dictionary, never into the filename (D32) — Motion, UA and analytics each add their own layer\')">Add tag&hellip;</span></div>';
                 var fc = c.renditions.length;
 
                 gameBody += '<tr>' +
                     '<td class="mono muted"><strong>' + String(c.seq_number).padStart(3, '0') + '</strong></td>' +
+                    '<td><div class="inline-input" onclick="event.stopPropagation();toast(\'Prototype: author is a dictionary field on the concept (D17)\')"><span>' + c.author + '</span><span class="caret">&#9660;</span></div></td>' +
                     '<td>' + tags + '</td>' +
                     '<td>' + thumb + '</td>' +
-                    '<td><span class="c-name">' + fullName + '</span><div class="dim small">Added ' + fmtDate(c.added) + '</div></td>' +
-                    '<td>' + (fc ? '<span class="files-toggle" onclick="toggleFiles(this)">' + fc + ' file' + (fc > 1 ? 's' : '') + ' <span class="chev">&#9654;</span></span>' : '<span class="dim">&mdash;</span>') + '</td>' +
-                    '<td class="muted">' + c.author + '</td>' +
-                    '<td>' + nets + '</td>' +
+                    '<td><span class="c-name">' + c.concept_name + '</span><div class="dim small">Added ' + fmtDate(c.added) + ' &middot; lifetime ' + c.lifetime + ' d</div></td>' +
+                    '<td>' + (fc ? '<span class="files-toggle" onclick="toggleSub(event, \'rr-' + c.id + '\', this)">' + fc + ' file' + (fc > 1 ? 's' : '') + ' <span class="chev' + (openSub['rr-' + c.id] ? ' open' : '') + '">&#9654;</span></span>' : '<span class="dim">&mdash;</span>') + '</td>' +
+                    '<td>' + perfCell(c) + '</td>' +
+                    '<td>' + netCell(c) + '</td>' +
+                    '<td style="text-align:right"><button class="btn-link btn-sm danger" onclick="event.stopPropagation();toast(\'Prototype: removes the concept from the catalog; nothing is deleted from Drive or networks (D23)\')">Delete</button></td>' +
                     '</tr>';
-
-                if (fc) {
-                    gameBody += '<tr class="rend-row" style="display:none"><td colspan="7"><div class="rend-list">';
-                    c.renditions.forEach(function (r) {
-                        var base = r.generated_name + '_' + c.uid;
-                        var info = [];
-                        if (r.width && r.height) info.push(r.width + '×' + r.height);
-                        if (r.duration_sec) info.push(r.duration_sec + 's');
-                        var ext = t.type === 'Video' ? '.mp4' : '.png';
-                        gameBody += '<div class="rend-item"><span class="mono">' + base + '</span>' +
-                            '<span class="dim small">' + info.join(' · ') + '</span>' +
-                            '<span style="flex:1"></span>' +
-                            '<button class="btn-link btn-sm" onclick="toast(\'Prototype: downloads as ' + base + ext + '\')">Download</button></div>';
-                    });
-                    gameBody += '</div></td></tr>';
-                }
+                if (fc) gameBody += filesRow(c, t);
+                gameBody += netsRow(c);
             });
         });
 
@@ -225,7 +367,7 @@ function render() {
         anyGame = true;
         var gOpen = autoOpen || expanded[g.short_name];
         html += '<tr class="game-row' + (gOpen ? ' open' : '') + '" onclick="toggleKey(\'' + g.short_name + '\')">' +
-            '<td colspan="7"><span class="chev' + (gOpen ? ' open' : '') + '">&#9654;</span>' +
+            '<td colspan="9"><span class="chev' + (gOpen ? ' open' : '') + '">&#9654;</span>' +
             esc(g.game_name) + '<span class="g-code">' + g.code_1c + '</span>' +
             '<span class="g-count">(' + total + ')</span></td></tr>';
         if (gOpen) html += gameBody;
@@ -238,18 +380,18 @@ function render() {
 
 function toggleKey(key) {
     expanded[key] = !expanded[key];
-    /* opening a game also opens nothing else; closing keeps type states */
     render();
 }
 
-function toggleFiles(el) {
-    event.stopPropagation();
-    var tr = el.closest('tr').nextElementSibling;
-    if (tr && tr.classList.contains('rend-row')) {
-        var open = tr.style.display !== 'none';
-        tr.style.display = open ? 'none' : '';
-        el.querySelector('.chev').classList.toggle('open', !open);
-    }
+function toggleSub(ev, id, el) {
+    ev.stopPropagation();
+    var tr = document.getElementById(id);
+    if (!tr) return;
+    var open = tr.style.display !== 'none';
+    tr.style.display = open ? 'none' : '';
+    openSub[id] = !open;
+    var ch = el.querySelector('.chev');
+    if (ch) ch.classList.toggle('open', !open);
 }
 </script>
 </body>
