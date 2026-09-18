@@ -67,13 +67,13 @@
     </div>
 
     <div class="panel panel-scroll">
-        <table class="tbl">
+        <table class="tbl tbl-inbox">
             <thead><tr>
                 <th style="width:34px"><input type="checkbox" id="chkAll" onchange="toggleAll(this)"></th>
-                <th>File</th><th style="width:140px">Folder</th><th style="width:150px">Meta</th>
-                <th style="width:96px">Type</th><th style="width:84px">Version</th>
-                <th style="width:120px">Status</th><th style="width:120px" class="sortable sorted">Imported<span class="arr">&#9660;</span></th>
-                <th style="width:300px">Apps</th><th style="width:200px; text-align:right">Actions</th>
+                <th style="width:230px">File</th><th style="width:110px">Folder</th><th style="width:160px">Meta</th>
+                <th style="width:90px">Type</th><th style="width:70px">Version</th>
+                <th style="width:120px">Status</th><th style="width:110px" class="sortable sorted">Imported<span class="arr">&#9660;</span></th>
+                <th style="width:270px">Apps</th><th style="width:180px; text-align:right">Actions</th>
             </tr></thead>
             <tbody id="rows"></tbody>
         </table>
@@ -203,7 +203,7 @@ function render() {
             ? '<div class="thumb"><img src="thumbnails/' + r.thumb + '" loading="lazy" alt=""></div>'
             : '<div class="thumb thumb-empty">' + (r.type === 'Video' ? '&#9654;' : r.type === 'Playable' ? '&#9881;' : '&#9633;') + '</div>';
         var appBox = r.apps.length
-            ? '<div class="tag-edit" style="min-width:280px;cursor:pointer" onclick="pickApps(' + r.id + ')">' + r.apps.map(function (a) {
+            ? '<div class="tag-edit" style="min-width:240px;cursor:pointer" onclick="pickApps(' + r.id + ')">' + r.apps.map(function (a) {
                 return '<span class="chip tag">' + APPS[a].code + ' &middot; ' + esc(APPS[a].name) + ' &middot; ' + APPS[a].plat + '<span class="x">&times;</span></span>';
               }).join('') + (r.auto ? '<span class="auto-badge" title="Auto-assigned by ' + r.auto + ' in the filename (D27)">auto</span>' : '') + '<span class="caret">&#9660;</span></div>'
             : (notSupported ? '<span class="dim">&mdash;</span>' : '<div class="tag-edit" style="min-width:280px;cursor:pointer" onclick="pickApps(' + r.id + ')"><span class="add">Pick app&hellip;</span><span class="caret">&#9660;</span></div>');
@@ -212,16 +212,16 @@ function render() {
         }).join('');
         var action;
         if (inCat) {
-            action = '<button class="icon-btn" title="Re-sync file from Drive" onclick="toast(\'Prototype: file re-synced from Drive\')">&#10227;</button>' +
-                '<button class="btn btn-sm" disabled style="margin-left:6px">In catalog &#10003;</button>' +
+            action = '<button class="icon-btn plain" title="Re-sync file from Drive" onclick="toast(\'Prototype: file re-synced from Drive\')">&#10227;</button>' +
+                '<button class="btn btn-green btn-sm" disabled style="margin-left:2px">Add to catalog</button>' +
                 '<button class="icon-btn" title="Remove from catalog — the file returns to Ready and can be reassigned" onclick="removeFromCatalog(' + r.id + ')">&#8617;</button>';
         } else if (!addable) {
-            action = '<button class="icon-btn" title="Re-sync file from Drive" onclick="toast(\'Prototype: file re-synced from Drive\')">&#10227;</button>' +
+            action = '<button class="icon-btn plain" title="Re-sync file from Drive" onclick="toast(\'Prototype: file re-synced from Drive\')">&#10227;</button>' +
                 '<button class="btn btn-green btn-sm" disabled style="margin-left:6px" title="' + (r.type === 'Playable' ? 'Playable — not supported yet (not in MVP 1)' : 'Not supported type — only video and images go to the catalog') + '">Add to catalog</button>';
         } else {
-            action = '<button class="icon-btn" title="Re-sync file from Drive" onclick="toast(\'Prototype: file re-synced from Drive\')">&#10227;</button>' +
+            action = '<button class="icon-btn plain" title="Re-sync file from Drive" onclick="toast(\'Prototype: file re-synced from Drive\')">&#10227;</button>' +
                 '<button class="btn btn-green btn-sm" style="margin-left:6px" onclick="addToCatalog(' + r.id + ')">Add to catalog &rsaquo;</button>' +
-                '<button class="btn-link btn-sm" title="Open in catalog after adding" onclick="toast(\'Prototype: opens the concept in the catalog\')">&rarr;</button>';
+                '<button class="btn-link olive btn-sm" title="Open in catalog after adding" onclick="toast(\'Prototype: opens the concept in the catalog\')">&rarr;</button>';
         }
         var statusCell = notSupported
             ? '<span class="chip chip-other" title="Unsupported file type (PDF, zip, HEIC…) — cannot be added to the catalog">Not supported</span>'
@@ -231,11 +231,11 @@ function render() {
 
         html += '<tr>' +
             '<td><input type="checkbox" ' + (r.checked ? 'checked' : '') + ' onchange="ROWS[' + r.id + '].checked=this.checked;updateBatch()"></td>' +
-            '<td><div style="display:flex;gap:12px;align-items:center;min-width:250px">' + thumb +
-                '<div style="min-width:0"><div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:230px" title="' + esc(r.file) + '">' + esc(r.file) + '</div>' +
-                '<div class="path" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:230px;color:var(--muted)">' + esc(r.folder) + '</div></div></div></td>' +
-            '<td class="muted small" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px" title="' + esc(r.folder) + '">' + esc(r.folder.split('/')[1] || r.folder) + '</td>' +
-            '<td class="small muted" style="line-height:1.45">' + r.meta + '<br>' + r.size + '<br><span class="dim" style="font-style:italic">Created ' + fmtDate(r.created) + '</span></td>' +
+            '<td><div style="display:flex;gap:12px;align-items:center;min-width:220px">' + thumb +
+                '<div style="min-width:0"><div style="font-weight:600;font-family:var(--ui);font-size:0.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px" title="' + esc(r.file) + '">' + esc(r.file) + '</div>' +
+                '<div class="path" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px;color:var(--muted);font-size:0.78rem">' + esc(r.folder) + '</div></div></div></td>' +
+            '<td class="muted small" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px" title="' + esc(r.folder) + '">' + esc(r.folder.split('/')[1] || r.folder) + '</td>' +
+            '<td class="small muted" style="line-height:1.5;white-space:nowrap">' + r.meta + '<br>' + r.size + '<br><span class="dim" style="font-style:italic">Created ' + fmtDate(r.created) + '</span></td>' +
             '<td><select class="sel-plain" onchange="ROWS[' + r.id + '].type=this.value;render()"' + (locked ? ' disabled' : '') + '>' + typeOpts + '</select></td>' +
             '<td>' + (locked ? '<span>' + (r.num ? 'V' + r.num : '&mdash;') + '</span>' : '<input class="in-plain" value="' + (r.num ? 'V' + r.num : '') + '" placeholder="&mdash;" onchange="ROWS[' + r.id + '].num=parseInt(this.value.replace(/\\D/g,\'\'))||null;render()">') + '</td>' +
             '<td>' + statusCell + '</td>' +

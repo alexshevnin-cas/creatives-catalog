@@ -39,7 +39,7 @@ function writeShell(opts) {
 
     document.write(
         '<aside class="sidebar">' +
-            '<a class="side-logo" href="index.html"><span class="logo-mark"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="17" fill="#141418"/><path d="M11 12.5h13.5L15 24h9.5" stroke="#fff" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><i class="logo-dot"></i></span><span class="brand">CAS.<b>A</b>I</span><span class="brand-tag">FDID-1410-Creatives</span></a>' +
+            '<a class="side-logo" href="index.html"><span class="logo-mark"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="17" fill="#141418"/><path d="M11 12.5h13.5L15 24h9.5" stroke="#fff" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><i class="logo-dot"></i></span><span class="brand">CAS.<b>A</b><i></i></span><span class="brand-tag">FDID-1410-Creatives</span></a>' +
             sideItem('index.html', 'home', 'Home', I.home) +
             sideItem('#', 'analytics', 'Analytics', I.analytics) +
             sideItem('games.html', 'apps', 'Applications', I.apps) +
